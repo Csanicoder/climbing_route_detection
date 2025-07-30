@@ -76,3 +76,4 @@ You can now run 'train.py' and 'inference.py' after to check out the results
 ## Some results
 ![Screenshot From 2025-07-30 17-57-36.png](results/Screenshot%20From%202025-07-30%2017-57-36.png)
 ![Screenshot From 2025-07-30 18-01-04.png](results/Screenshot%20From%202025-07-30%2018-01-04.png)
+![Screenshot From 2025-07-30 21-28-50.png](results/Screenshot%20From%202025-07-30%2021-28-50.png)
