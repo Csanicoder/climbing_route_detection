@@ -3,17 +3,17 @@
 This is a small test project for setting up a Mask R-CNN model to recognise climbing 
 holds from a picture and identify their type.
 
-## Goals
+## 🏁 Goals
 
 This project is the route detection part of a bigger project, with the goal of creating a tool for climbers to help analyze their movement.
 Mainly, I aim to be able to efficently recognise and classify climbing holds. since this is important data that we can use to analyze climbs.
 
-## Current State
+## 📌 Current State
 
 As of right now, I can fine-tune a pre-trained Mask R-CNN model to recognise climbing holds, and then run it on an image.
 I plan to make more training data to get more accurate results.
 
-## Project Structure
+## ➡️ Project Structure
 
 📂 dataset\
 Contains the sample annotations (MS COCO format), along with images used for training and testing
