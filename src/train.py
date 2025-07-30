@@ -22,12 +22,12 @@ MetadataCatalog.clear()
 #----------------------------
 
 register_coco_instances("dataset_train", {},
-                        "dataset/annotations/train_annotations.json",
-                        "dataset/train")
+                        "../dataset/annotations/train_annotations.json",
+                        "../dataset/train")
 
 register_coco_instances("dataset_test", {},
-                        "dataset/annotations/val_annotations.json",
-                        "dataset/val")
+                        "../dataset/annotations/val_annotations.json",
+                        "../dataset/val")
 
 
 #------------------------------
@@ -86,11 +86,11 @@ trainer.train()
 # Save trained model
 #-------------------
 
-checkpointer = DetectionCheckpointer(trainer.model, save_dir="models/")
+checkpointer = DetectionCheckpointer(trainer.model, save_dir="../models/")
 checkpointer.save("model_0")
 
 # Save config file
-f = open('models/model_0_cfg.yaml','w')
+f = open('../models/model_0_cfg.yaml', 'w')
 f.write(cfg.dump())
 f.close()
 

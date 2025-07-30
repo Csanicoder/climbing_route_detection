@@ -20,16 +20,16 @@ microcontroller_metadata = MetadataCatalog.get("dataset_train")
 
 # Configure the inference parameters
 cfg = get_cfg()
-cfg.merge_from_file("models/model_0_cfg.yaml")
+cfg.merge_from_file("../models/model_0_cfg.yaml")
 cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5 # Set threshold for this model
 cfg.MODEL.ROI_HEADS.NUM_CLASSES = 20
-cfg.MODEL.WEIGHTS = "models/model_0.pth"
+cfg.MODEL.WEIGHTS = "../models/model_0.pth"
 cfg.DATASETS.TEST = ("dataset_test", )
 
 predictor = DefaultPredictor(cfg)
 
 # Run inference on the selected image
-img = cv2.imread("dataset/train/image23.jpg")
+img = cv2.imread("../dataset/train/image23.jpg")
 outputs = predictor(img)
 
 # Visualize results
