@@ -72,3 +72,7 @@ Then run:
 > pip install -r requirements.txt
 
 You can now run 'train.py' and 'inference.py' after to check out the results
+
+## Some results
+
+![Figure_1.png](results/Figure_1.png)
