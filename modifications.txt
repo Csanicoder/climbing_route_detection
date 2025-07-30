@@ -1,0 +1,18 @@
+
+MODIFICATIONS DONE IN THE PYTHON PACKAGES
+
+======================================================================================================
+
+At:     envs/route_detection/lib/python3.9/site-packages/torch/utils/tensorboard/__init__.py
+
+line 2:     import setuptools._distutils.version
+
+line 4:     LooseVersion = setuptools._distutils.version.LooseVersion
+
+======================================================================================================
+
+At:     envs/route_detection/lib/python3.9/site-packages/detectron2/structures/masks.py
+
+line 36:    return mask_util.decode(rle).astype(np.bool_)
+
+======================================================================================================
