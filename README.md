@@ -1,4 +1,4 @@
-# Climbing Route Detection
+# 🧗 Climbing Route Detection
 
 This is a small test project for setting up a Mask R-CNN model to recognise climbing 
 holds from a picture and identify their type.
@@ -30,7 +30,7 @@ Directory containing the source files for training and running
 📄 modifications.txt\
 I had to make some modifications to some of the python packages, they are listed here.
 
-## Dependencies
+## 📦 Dependencies
 
 - Python 3.9
 - Anaconda
@@ -38,17 +38,17 @@ I had to make some modifications to some of the python packages, they are listed
 - Python packages contained in:\
 📋 requirements.txt
 
-## How to run
+## 🚀 How to run
 
-Here I'll show how to set up and run the project on your own machine.
-Usually running and especially training a model locally is quite resource demanding so
+Here I'll show how to set up and run the project on your own machine.\
+WARNING: Usually running and especially training a model locally is quite resource demanding so
 you might want to check if you have the specs to do such tasks.
 
 (This machine has an RTX 4060 amd 8gb VRAM for ex.)
 
 ### 1. PyCharm
 
-- Install the PyCharm Community Edition IDE\
+- Install the PyCharm Community Edition IDE
 
 You can download it from here: https://www.jetbrains.com/pycharm/download/
 
