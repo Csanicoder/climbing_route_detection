@@ -27,7 +27,7 @@ Some example result from a trained model
 📂 src\
 Directory containing the source files for training and running
 
-📄 modifications.txt
+📄 modifications.txt\
 I had to make some modifications to some of the python packages, they are listed here.
 
 ## Dependencies
