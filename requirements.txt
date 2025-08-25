@@ -17,6 +17,7 @@ detectron2==0.6
 # Optional visualization
 matplotlib
 Pillow<10
+dearpygui
 
 #--------------------------------------------------------------------------------------
 # To install, run 'pip install -r requirements.txt' in conda enviroment with python 3.9

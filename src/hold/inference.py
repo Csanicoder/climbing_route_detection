@@ -1,5 +1,3 @@
-import os
-import cv2
 from detectron2.config import get_cfg
 from detectron2.data import MetadataCatalog
 from detectron2.engine import DefaultPredictor
@@ -24,14 +22,15 @@ cfg.merge_from_file("../models/model_0_cfg.yaml")
 cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5 # Set threshold for this model
 cfg.MODEL.ROI_HEADS.NUM_CLASSES = 20
 cfg.MODEL.WEIGHTS = "../models/model_0.pth"
-cfg.DATASETS.TEST = ("dataset_test", )
+cfg.DATASETS.TEST = ("dataset_val", )
 
 predictor = DefaultPredictor(cfg)
 
-# Run inference on the selected image
-img = cv2.imread("../dataset/train/image23.jpg")
-outputs = predictor(img)
+def inference(image):
+    return predictor(image)
 
+
+'''
 # Visualize results
 v = Visualizer(img[:, :, ::-1], metadata=microcontroller_metadata, scale=0.8,
                instance_mode=ColorMode.IMAGE_BW)  # removes the colors of unsegmented pixels
@@ -41,3 +40,4 @@ plt.figure(figsize=(25, 25))
 plt.imshow(v.get_image())
 plt.axis('off')
 plt.show()
+'''
