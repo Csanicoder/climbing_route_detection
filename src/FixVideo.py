@@ -1,14 +1,4 @@
-import json
 import cv2
-import DataVisualizer
-
-# Load Holds JSON file
-with open("data/holds.json") as hold_f:
-    hold_data = json.load(hold_f)
-
-# Load Pose JSON file
-with open("data/pose.json") as pose_f:
-    pose_data = json.load(pose_f)
 
 video_path = "video/VID_20250904_171959.mp4"
 cap = cv2.VideoCapture(video_path)
@@ -23,9 +13,7 @@ frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
 # opening the writing to the output
 fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-out = cv2.VideoWriter("out.mp4", fourcc, fps, (width, height))
-
-dv = DataVisualizer.DataVisualizer()
+out = cv2.VideoWriter("new_out.mp4", fourcc, fps, (width, height))
 
 for i in range(frame_count):
 
@@ -39,9 +27,7 @@ for i in range(frame_count):
 
     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-    result = dv.visualize(hold_data, pose_data[i], frame_rgb)
-
-    save_bgr = cv2.cvtColor(result, cv2.COLOR_RGB2BGR)
+    save_bgr = cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2BGR)
     out.write(save_bgr)
 
 cap.release()

@@ -20,11 +20,21 @@ class DataVisualizer:
                    'crimpy_edge', 'crimpy_jib']
 
 
+
+    def draw_shape(self, shape, data, color, img_rgb):
+        if shape == "rect":
+            return cv2.rectangle(img_rgb, (int(data[0]), int(data[1])), (int(data[2]), int(data[3])), color=color, thickness=int(data[4] if len(data) > 4 else 4))
+        if shape == "circle":
+            return cv2.circle(img_rgb, (int(data[0]), int(data[1])), radius=int(data[2]), color=color, thickness=-1)
+        if shape == "line":
+            return cv2.line(img_rgb, (int(data[0]), int(data[1])), (int(data[2]), int(data[3])), color, thickness=int(data[4] if len(data) > 4 else 4))
+        return img_rgb
+
     #------------------------------------------
     #         Draw Hold Annotations
     #------------------------------------------
 
-    def visualize(self, hold_data, pose_data, img_rgb):
+    def visualize(self, hold_data, pose_data, user_data, img_rgb):
 
         for hold in hold_data:
             color = self.hold_class_colours[hold["class"]]
@@ -67,6 +77,23 @@ class DataVisualizer:
             text_color = tuple([min(255, channel * 2) for channel in color])
             cv2.putText(img_rgb, text, (text_x, text_y), font, font_scale, text_color, thickness)
 
+            cv2.circle(img_rgb, (int(hold["centroid"][0]), int(hold["centroid"][1])), radius=6, color=color, thickness=-1)
+
+
+        # Visualize user data
+        for shape in user_data:
+            type = shape["type"]
+            color = shape["color"]
+            data = shape["data"]
+            if type == "circle":
+                cv2.circle(img_rgb, (int(data[0]), int(data[1])), radius=int(data[2]), color=color, thickness=-1)
+            if type == "line":
+                cv2.line(img_rgb, (data[0], data[1]), (data[2], data[3]), color, thickness=data[4] if len(data) > 4 else 4)
+            if type == "rect":
+                cv2.rectangle(img_rgb, (data[0], data[1]), (data[2], data[3]), color, 4)
+
+        if not pose_data:
+            return img_rgb
 
         #------------------------------------
         #         Draw connections
@@ -84,5 +111,6 @@ class DataVisualizer:
 
         for x, y in pose_data["keypoints"]:
             cv2.circle(img_rgb, (int(x), int(y)), radius=6, color=(0, 255, 0), thickness=-1)
+
 
         return img_rgb

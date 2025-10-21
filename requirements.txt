@@ -15,10 +15,11 @@ detectron2==0.6
 -f https://dl.fbaipublicfiles.com/detectron2/wheels/cu113/torch1.10/index.html
 
 # Optional visualization
-matplotlib
+matplotlib~=3.9.4
 Pillow<10
-dearpygui
+dearpygui~=2.1.0
 
 #--------------------------------------------------------------------------------------
 # To install, run 'pip install -r requirements.txt' in conda enviroment with python 3.9
 #--------------------------------------------------------------------------------------
+scipy~=1.13.1
