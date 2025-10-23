@@ -29,15 +29,12 @@ predictor = DefaultPredictor(cfg)
 def inference(image):
     return predictor(image)
 
-
-'''
-# Visualize results
-v = Visualizer(img[:, :, ::-1], metadata=microcontroller_metadata, scale=0.8,
-               instance_mode=ColorMode.IMAGE_BW)  # removes the colors of unsegmented pixels
-v = v.draw_instance_predictions(outputs["instances"].to("cpu"))
-
-plt.figure(figsize=(25, 25))
-plt.imshow(v.get_image())
-plt.axis('off')
-plt.show()
-'''
+# # Visualize results
+# v = Visualizer(img[:, :, ::-1], metadata=microcontroller_metadata, scale=0.8,
+#                instance_mode=ColorMode.IMAGE_BW)  # removes the colors of unsegmented pixels
+# v = v.draw_instance_predictions(outputs["instances"].to("cpu"))
+#
+# plt.figure(figsize=(25, 25))
+# plt.imshow(v.get_image())
+# plt.axis('off')
+# plt.show()

@@ -5,11 +5,11 @@ import numpy as np
 from scipy.signal import savgol_filter
 
 # Load Holds JSON file
-with open("data/holds.json") as hold_f:
+with open("../data/black_v4_holds.json") as hold_f:
     hold_data = json.load(hold_f)
 
 # Load Pose JSON file
-with open("data/pose_smoothed.json") as pose_f:
+with open("../data/black_v4_pose_smoothed.json") as pose_f:
     pose_data = json.load(pose_f)
 
 frame_count = len(pose_data)
@@ -208,5 +208,5 @@ for i in range(12):
 
 
 # Save to JSON
-with open("data/analytics.json", "w") as f:
+with open("../data/black_v4_analytics.json", "w") as f:
     json.dump(analytics_data, f, indent=2)

@@ -3,7 +3,7 @@ import numpy as np
 from scipy.signal import savgol_filter
 
 # Load JSON
-with open("data/pose.json") as f:
+with open("../data/black_v4_pose.json") as f:
     pose_data = json.load(f)
 
 # Filter out empty frames
@@ -30,5 +30,5 @@ for i, frame in enumerate(valid_frames):
     frame["keypoints"] = smoothed_keypoints[i].tolist()
 
 # Save back to JSON
-with open("data/pose_smoothed.json", "w") as f:
+with open("../data/black_v4_pose_smoothed.json", "w") as f:
     json.dump(pose_data, f, indent=2)

@@ -6,16 +6,19 @@ import cv2
 import numpy as np
 from dearpygui.dearpygui import get_value, does_item_exist
 
+
+Video = "blue_v6"
+
 # Load Holds JSON file with hold data
-with open("data/holds.json") as hold_f:
+with open(f"../data/{Video}_holds.json") as hold_f:
     hold_data = json.load(hold_f)
 
 # Load Pose JSON file with pose data
-with open("data/pose_smoothed.json") as pose_f:
+with open(f"../data/{Video}_pose_smoothed.json") as pose_f:
     pose_data = json.load(pose_f)
 
 # Load Pose JSON file with analytics
-with open("data/analytics.json") as analytics_f:
+with open(f"../data/{Video}_analytics.json") as analytics_f:
     analytics_data = json.load(analytics_f)
 
 
@@ -28,7 +31,6 @@ def init_video(video_path : str):
     global frame
     global video_infos
 
-    video_path = "video/new_out.mp4"
     cap = cv2.VideoCapture(video_path)
 
     if not cap.isOpened():
@@ -46,7 +48,7 @@ def init_video(video_path : str):
     ret, frame = cap.read()
     if not ret:
         raise RuntimeError("Could not read first frame from video.")
-init_video("video/VID_20250904_171959.mp4")
+init_video(f"../video/{Video}_fixed.mp4")
 
 frame_time = 1 / video_infos["fps"]
 
@@ -65,7 +67,7 @@ texture_data = frame.astype(np.float32).flatten() / 255.0
 dpg.create_context()
 
 with dpg.font_registry():
-    font = dpg.add_font("/usr/share/fonts/truetype/ubuntu/Ubuntu-R.ttf", 24)
+    font = dpg.add_font("/usr/share/fonts/truetype/ubuntu/Ubuntu-R.ttf", 18)
 
 # Texture registry
 with dpg.texture_registry():
@@ -266,7 +268,12 @@ def update_frame():
 
 with dpg.window(tag="Primary Window"):
 
-    with dpg.group(horizontal=True, height=viewport_height + 30):
+    dpg.add_tab_bar(tag="tabs")
+
+    RT = dpg.add_tab(label="Real-Time", parent="tabs")
+    SUM = dpg.add_tab(label="Summary", parent="tabs")
+
+    with dpg.group(horizontal=True, parent=RT):
 
         # ---------------------------------------------------------------
         #                        Visualizations
@@ -274,7 +281,7 @@ with dpg.window(tag="Primary Window"):
 
         with dpg.child_window(width=400, border=False):
 
-            with dpg.child_window(tag="visualizations", no_scrollbar=True, height=viewport_height - 100, menubar=True, resizable_y=True):
+            with dpg.child_window(tag="visualizations", no_scrollbar=True, height=viewport_height - 130, menubar=True, resizable_y=True):
 
                 with dpg.menu_bar():
                     dpg.add_menu(label="Visualizations", enabled=False)

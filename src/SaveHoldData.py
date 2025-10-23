@@ -4,7 +4,7 @@ import numpy as np
 
 from src.hold import inference
 
-video_path = "video/VID_20250904_171959.mp4"
+video_path = "../video/black_v4.mp4"
 cap = cv2.VideoCapture(video_path)
 
 if not cap.isOpened():
@@ -77,5 +77,5 @@ for i in range(frame_count):
 cap.release()
 
 # Save to JSON
-with open("data/holds.json", "w") as f:
+with open("../data/black_v4_holds.json", "w") as f:
     json.dump(data, f, indent=2)

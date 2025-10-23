@@ -3,8 +3,5 @@
 
 .idea
 
-src/video/out.mp4
-src/video/slab.mp4
-/src/video/VID_20250904_171959.mp4
-/src/video/
-/src/data/
+/video/
+/data/
