@@ -1,67 +1,36 @@
 import json
 import time
-
 import dearpygui.dearpygui as dpg
 import cv2
 import numpy as np
-from dearpygui.dearpygui import get_value, does_item_exist
+
+import VideoClass
 
 
-Video = "blue_v6"
+video_name = "blue_v6"
+
+Video = VideoClass.Video(f"../video/{video_name}_fixed.mp4")
 
 # Load Holds JSON file with hold data
-with open(f"../data/{Video}_holds.json") as hold_f:
+with open(f"../data/{video_name}_holds.json") as hold_f:
     hold_data = json.load(hold_f)
 
 # Load Pose JSON file with pose data
-with open(f"../data/{Video}_pose_smoothed.json") as pose_f:
+with open(f"../data/{video_name}_pose_smoothed.json") as pose_f:
     pose_data = json.load(pose_f)
 
 # Load Pose JSON file with analytics
-with open(f"../data/{Video}_analytics.json") as analytics_f:
+with open(f"../data/{video_name}_analytics.json") as analytics_f:
     analytics_data = json.load(analytics_f)
 
-
-cap = 0
-frame = 0
-video_infos = {}
-
-def init_video(video_path : str):
-    global cap
-    global frame
-    global video_infos
-
-    cap = cv2.VideoCapture(video_path)
-
-    if not cap.isOpened():
-        raise RuntimeError(f"Could not open video: {video_path}")
-
-    # Get video infos
-    video_infos = {
-        "width": int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
-        "height": int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)),
-        "frame_count": int(cap.get(cv2.CAP_PROP_FRAME_COUNT)),
-        "fps": cap.get(cv2.CAP_PROP_FPS)
-    }
-
-    # Read first frame to get size
-    ret, frame = cap.read()
-    if not ret:
-        raise RuntimeError("Could not read first frame from video.")
-init_video(f"../video/{Video}_fixed.mp4")
-
-frame_time = 1 / video_infos["fps"]
 
 viewport_width = 1920
 viewport_height = 1080
 
 texture_height = viewport_height - 100
-texture_width = int((video_infos["width"] / video_infos["height"]) * texture_height)
+texture_width = int((Video.WIDTH / Video.HEIGHT) * texture_height)
 
-frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-frame = cv2.resize(frame, (texture_width, texture_height))
 
-texture_data = frame.astype(np.float32).flatten() / 255.0
 
 # Create DearPyGui context
 dpg.create_context()
@@ -69,11 +38,21 @@ dpg.create_context()
 with dpg.font_registry():
     font = dpg.add_font("/usr/share/fonts/truetype/ubuntu/Ubuntu-R.ttf", 18)
 
-# Texture registry
-with dpg.texture_registry():
-    dpg.add_raw_texture(texture_width, texture_height, texture_data,
-                        format=dpg.mvFormat_Float_rgb,
-                        tag="video_texture")
+def create_video_texture():
+    """Create the texture entry for displaying the video"""
+
+    # Texture registry
+    with dpg.texture_registry():
+        frame = cv2.cvtColor(Video.current(), cv2.COLOR_BGR2RGB)
+        frame = cv2.resize(frame, (texture_width, texture_height))
+
+        texture_data = frame.flatten()
+
+        dpg.add_raw_texture(texture_width, texture_height, texture_data,
+                            format=dpg.mvFormat_Int_rgb,
+                            tag="video_texture")
+
+create_video_texture()
 
 
 visualize_elements = [False] * len(analytics_data)
@@ -84,11 +63,11 @@ isVideoPaused = False
 
 def set_visualize_keypoints(sender):
     global do_visualize_keypoints
-    do_visualize_keypoints = get_value(sender)
+    do_visualize_keypoints = dpg.get_value(sender)
 
 def set_visualize_bones(sender):
     global do_visualize_bones
-    do_visualize_bones = get_value(sender)
+    do_visualize_bones = dpg.get_value(sender)
 
 def visualize_keypoints(frame_index, rgb_image):
     global pose_data
@@ -202,45 +181,50 @@ def start_stop_button(sender):
         dpg.set_item_label(sender, ">")
         isVideoPaused = True
 
+def check_frame_slider():
+    """
+    Check if the frame slider is being used and modify ``isVideoPaused`` accordingly.
+
+    Returns:
+        The value of the frame slider
+    """
+    global isVideoPaused
+
+    if dpg.is_item_active("frame_data"):
+        isVideoPaused = True
+
+    return dpg.get_value("frame_data")
+
 #---------------------------------
 #    Update video method
 #---------------------------------
 
 def update_frame():
-    global cap
     global do_visualize_keypoints
     global do_visualize_bones
 
-    if dpg.is_item_active("frame_data"): # If the frame slider is held down, we set the index of the next frame to read
-        cap.set(cv2.CAP_PROP_POS_FRAMES, dpg.get_value("frame_data"))
-        refresh_visualize = True  # new frame, we must refresh the visualizations
+    frame_idx = check_frame_slider()
 
-    elif isVideoPaused:
-        cap.set(cv2.CAP_PROP_POS_FRAMES, cap.get(cv2.CAP_PROP_POS_FRAMES) - 1)
+    if isVideoPaused:
+        frame = Video.get_frame(frame_idx)
 
-
-    ret, frame = cap.read()
-    if not ret:
-        # Restart video when finished
-        cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
-        ret, frame = cap.read()
-        if not ret:
-            return
-
-    frame_idx = int(cap.get(cv2.CAP_PROP_POS_FRAMES) - 1)
+    else: # Frame slider is inactive
+        frame = Video.next()
 
     # Convert BGR → RGB
     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
     result = frame_rgb
 
-    display_analytics_panel(frame_idx)
+
 
     if do_visualize_bones:
         result = visualize_bones(frame_idx, result)
 
     if do_visualize_keypoints:
         result = visualize_keypoints(frame_idx, result)
+
+    display_analytics_panel(frame_idx)
 
     # Start visualizing the elements
     for k in range(len(visualize_elements)):  # loop through elements that must be visualized
@@ -383,9 +367,8 @@ while dpg.is_dearpygui_running():
     dpg.render_dearpygui_frame()
 
     elapsed = time.time() - start_time
-    sleep_time = frame_time - elapsed
+    sleep_time = Video.FRAME_TIME - elapsed
     if sleep_time > 0:
         time.sleep(sleep_time)
 
 dpg.destroy_context()
-cap.release()
