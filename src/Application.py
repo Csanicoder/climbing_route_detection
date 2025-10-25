@@ -46,10 +46,10 @@ def create_video_texture():
         frame = cv2.cvtColor(Video.current(), cv2.COLOR_BGR2RGB)
         frame = cv2.resize(frame, (texture_width, texture_height))
 
-        texture_data = frame.flatten()
+        texture_data = frame.astype(np.float32).flatten() / 255.0
 
         dpg.add_raw_texture(texture_width, texture_height, texture_data,
-                            format=dpg.mvFormat_Int_rgb,
+                            format=dpg.mvFormat_Float_rgb,
                             tag="video_texture")
 
 create_video_texture()
@@ -80,7 +80,7 @@ def visualize_keypoints(frame_index, rgb_image):
     for keypoint in pose_data[frame_index]["keypoints"]:
         if pose_data[frame_index]["keypoints"].index(keypoint) in [0, 1, 2, 3, 4]:
             continue
-        result = cv2.circle(rgb_image, [int(a) for a in keypoint], radius=8, color=(255, 255, 0), thickness=-1)
+        result = cv2.circle(rgb_image, [int(a) for a in keypoint], radius=8, color=(0, 255, 255), thickness=-1)
 
     return result
 
@@ -99,7 +99,7 @@ def visualize_bones(frame_index, rgb_image):
         keypoints = pose_data[frame_index]["keypoints"]
         keypoints[bone[0]] = [int(x) for x in keypoints[bone[0]]]
         keypoints[bone[1]] = [int(x) for x in keypoints[bone[1]]]
-        result = cv2.line(rgb_image, keypoints[bone[0]], keypoints[bone[1]], (0, 255, 255), thickness=6)
+        result = cv2.line(rgb_image, keypoints[bone[0]], keypoints[bone[1]], (255, 255, 0), thickness=6)
 
     return result
 
@@ -138,7 +138,7 @@ def visualize(element_id, rgb_image, frame_index):
         com_pos = analytics_data[0]["data"][frame_index]
         com_pos[0] = int(com_pos[0])
         com_pos[1] = int(com_pos[1])
-        result = cv2.circle(rgb_image, com_pos, radius=12, color=(255, 0, 0), thickness=-1)
+        result = cv2.circle(rgb_image, com_pos, radius=12, color=(0, 0, 255), thickness=-1)
         return result
 
 
@@ -163,8 +163,8 @@ def visualize(element_id, rgb_image, frame_index):
         xv, yv = analytics_data[element_id]["data"][frame_index][0]
         vel = [int(xv * 0.2), int(yv * 0.2)]
 
-        result = cv2.line(rgb_image, keypoint_pos, (np.array(keypoint_pos) + np.array(vel)).tolist(), (255, 255, 0), thickness=8)
-        result = cv2.circle(result, (np.array(keypoint_pos) + np.array(vel)).tolist(), radius=8, color=(255, 255, 0), thickness=-1)
+        result = cv2.line(rgb_image, keypoint_pos, (np.array(keypoint_pos) + np.array(vel)).tolist(), (0, 255, 255), thickness=8)
+        result = cv2.circle(result, (np.array(keypoint_pos) + np.array(vel)).tolist(), radius=8, color=(0, 255, 255), thickness=-1)
         return result
 
 
@@ -190,8 +190,7 @@ def check_frame_slider():
     """
     global isVideoPaused
 
-    if dpg.is_item_active("frame_data"):
-        isVideoPaused = True
+    isVideoPaused = True if isVideoPaused else dpg.is_item_active("frame_data")
 
     return dpg.get_value("frame_data")
 
@@ -210,35 +209,24 @@ def update_frame():
 
     else: # Frame slider is inactive
         frame = Video.next()
-
-    # Convert BGR → RGB
-    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-    result = frame_rgb
-
-
+        dpg.set_value("frame_data", Video.get_index())
 
     if do_visualize_bones:
-        result = visualize_bones(frame_idx, result)
+        frame = visualize_bones(frame_idx, frame)
 
     if do_visualize_keypoints:
-        result = visualize_keypoints(frame_idx, result)
+        frame = visualize_keypoints(frame_idx, frame)
 
     display_analytics_panel(frame_idx)
 
     # Start visualizing the elements
     for k in range(len(visualize_elements)):  # loop through elements that must be visualized
         if visualize_elements[k]:  # if it is true
-            result = visualize(k, result, frame_idx)  # visualize that element (the index of the element is the id as well)
+            frame = visualize(k, frame, frame_idx)  # visualize that element (the index of the element is the id as well)
 
-
-
-
-    result = cv2.resize(result, (texture_width, texture_height))
-
-    # Normalize to [0, 1] float32
-    texture_data = result.astype(np.float32).flatten() / 255.0
-
+    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    frame = cv2.resize(frame, (texture_width, texture_height))
+    texture_data = frame.astype(np.float32).flatten() / 255.0
     # Update the texture
     dpg.set_value("video_texture", texture_data)
 
@@ -274,7 +262,7 @@ with dpg.window(tag="Primary Window"):
 
                     element = analytics_data[i]
 
-                    if not does_item_exist("v" + element["category"]): # if the category header doesn't exist, make it
+                    if not dpg.does_item_exist("v" + element["category"]): # if the category header doesn't exist, make it
                         dpg.add_collapsing_header(label=element["category"], tag="v" + element["category"], default_open=True)
                         dpg.add_spacer(height=10)
 
@@ -306,7 +294,7 @@ with dpg.window(tag="Primary Window"):
             dpg.add_image("video_texture", width=texture_width, height=texture_height)
 
             # Frame Slider
-            dpg.add_slider_int(tag="frame_data", min_value=1, max_value=video_infos["frame_count"], format="Frame Index: %d", no_input=True, width=texture_width)
+            dpg.add_slider_int(tag="frame_data", min_value=1, max_value=Video.FRAME_COUNT, format="Frame Index: %d", no_input=True, width=texture_width)
 
             # Start button
             dpg.add_button(tag="start_btn", label="| |", width=50, height=50, callback=start_stop_button)
@@ -327,7 +315,7 @@ with dpg.window(tag="Primary Window"):
 
                 element = analytics_data[i]
 
-                if not does_item_exist(element["category"]): # if the category header doesn't exist, make it
+                if not dpg.does_item_exist(element["category"]): # if the category header doesn't exist, make it
                     dpg.add_collapsing_header(label=element["category"], tag=element["category"], default_open=True)
                     dpg.add_spacer(height=10)
 
@@ -360,9 +348,7 @@ dpg.render_dearpygui_frame()
 while dpg.is_dearpygui_running():
     start_time = time.time()
 
-    frame_idx = int(update_frame())
-
-    dpg.set_value("frame_data", frame_idx)
+    update_frame()
 
     dpg.render_dearpygui_frame()
 
