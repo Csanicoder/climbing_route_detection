@@ -202,9 +202,9 @@ def update_frame():
     global do_visualize_keypoints
     global do_visualize_bones
 
-    frame_idx = check_frame_slider()
+    frame_idx = dpg.get_value("frame_data")
 
-    if isVideoPaused:
+    if isVideoPaused or dpg.is_item_active("frame_data"):
         frame = Video.get_frame(frame_idx)
 
     else: # Frame slider is inactive
@@ -229,7 +229,6 @@ def update_frame():
     texture_data = frame.astype(np.float32).flatten() / 255.0
     # Update the texture
     dpg.set_value("video_texture", texture_data)
-
 
     return frame_idx
 
