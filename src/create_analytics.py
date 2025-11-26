@@ -5,11 +5,11 @@ import numpy as np
 from scipy.signal import savgol_filter
 
 # Load Holds JSON file
-with open("../data/black_v4_holds.json") as hold_f:
+with open("../data/red_lache_to_hook_holds.json") as hold_f:
     hold_data = json.load(hold_f)
 
 # Load Pose JSON file
-with open("../data/black_v4_pose_smoothed.json") as pose_f:
+with open("../data/red_lache_to_hook_pose_smoothed.json") as pose_f:
     pose_data = json.load(pose_f)
 
 frame_count = len(pose_data)
@@ -38,27 +38,6 @@ def count_if(ar : np.ndarray, condition : Callable[..., bool]):
     return np.sum([1 for x in ar if condition(x)])
 
 
-'''def calculate_point_velocity(positions : np.array):
-    data = []
-    for i in range(len(positions)):
-        values = [] # Item 0 of tuple is the velocity vector, the second is the magnitude
-
-        pos1 = max(0, i - 1) # Bottom clamp
-        pos2 = min(len(positions) - 1, i + 1) # Top clamp
-        delta = pos2 - pos1 # Get the number of frames we divide over
-
-        displacement = positions[pos2] - positions[pos1] # displacement vector
-        displacement_m = sqrt(pow(displacement[0], 2) + pow(displacement[1], 2)) # displacement magnitude, pythagorean theorem
-        timeframe = delta * dt # time we divide over in seconds
-
-        values.append((displacement / timeframe).tolist())
-        values.append(displacement_m / timeframe)
-
-        data.append(values)
-
-    return data
-'''
-
 com_positions = np.array(None)
 angles_keypoints_map = [
     [11, 5, 7], # left armpit
@@ -71,6 +50,206 @@ angles_keypoints_map = [
     [12, 14, 16] # right knee
 ]
 keypoint_velocities = []
+
+def body_bbox():
+    bboxes = []
+    for pose in pose_data:
+        if pose and pose.get("keypoints"):
+            keypoints = np.array(pose["keypoints"])
+            bbox = np.stack((keypoints.min(axis=0), keypoints.max(axis=0)))
+            bboxes.append(bbox)
+        else:
+            bboxes.append(None)  # placeholder for empty poses
+    return bboxes
+
+body_bboxes = body_bbox()
+
+def body_center():
+    global body_bboxes
+    centers = []
+    for bbox in body_bboxes:
+        if bbox is not None:
+            center = np.floor(bbox.mean(axis=0)).astype(int)
+            centers.append(center.tolist())  # convert NumPy array to list of ints
+        else:
+            centers.append(None)  # or [] if you prefer empty list
+    return centers
+
+body_centers = body_center()
+
+body_vertical_lines = []    # x_center along full y-range
+body_horizontal_lines = []  # y_center along full x-range
+
+def bodycenterlines():
+    global body_bboxes
+    global body_centers
+    global body_vertical_lines
+    global body_horizontal_lines
+
+    for bbox, center in zip(body_bboxes, body_centers):
+        if bbox is None or center is None:
+            body_vertical_lines.append(None)
+            body_horizontal_lines.append(None)
+            continue
+
+        # Convert to integers for range
+        x_min, y_min = map(int, bbox[0])
+        x_max, y_max = map(int, bbox[1])
+        x_center, y_center = map(int, center)
+
+        # Vertical line: x = x_center, y = y_min -> y_max
+        vertical_line = [[x_center, y_min], [x_center, y_max]]
+        body_vertical_lines.append(vertical_line)
+
+        # Horizontal line: y = y_center, x = x_min -> x_max
+        horizontal_line = [[x_min, y_center], [x_max, y_center]]
+        body_horizontal_lines.append(horizontal_line)
+
+bodycenterlines()
+
+# Initialize lists
+upper_bboxes, upper_centers, upper_vlines, upper_hlines = [], [], [], []
+lower_bboxes, lower_centers, lower_vlines, lower_hlines = [], [], [], []
+
+def upper_and_lower_metrics():
+    global pose_data
+    global upper_bboxes, upper_centers, upper_vlines, upper_hlines
+    global lower_bboxes, lower_centers, lower_vlines, lower_hlines
+
+    for pose in pose_data:
+        if not pose or "keypoints" not in pose or not pose["keypoints"]:
+            # Append None or empty placeholders
+            upper_bboxes.append(None)
+            upper_centers.append(None)
+            upper_vlines.append(None)
+            upper_hlines.append(None)
+            lower_bboxes.append(None)
+            lower_centers.append(None)
+            lower_vlines.append(None)
+            lower_hlines.append(None)
+            continue
+
+        # Separate upper and lower body points
+        upper_points = np.array(pose["keypoints"][5:12])
+        lower_points = np.array(pose["keypoints"][11:])
+
+        def compute_metrics(points):
+            if points.shape[0] == 0:
+                return None, None, None, None
+            bbox = np.stack((points.min(axis=0), points.max(axis=0)))  # [min, max]
+            center = np.floor(bbox.sum(axis=0) / 2).astype(int)
+            x_center, y_center = center
+
+            x_min, y_min = map(int, bbox[0])
+            x_max, y_max = map(int, bbox[1])
+
+            # Vertical line: x_center along y-range
+            vline = np.array([[x_center, y_min], [x_center, y_max]])
+            # Horizontal line: y_center along x-range
+            hline = np.array([[x_min, y_center], [x_max, y_center]])
+
+            return bbox.tolist(), center.tolist(), vline.tolist(), hline.tolist()
+
+        ubbox, ucenter, uvline, uhline = compute_metrics(upper_points)
+        lbbox, lcenter, lvline, lhline = compute_metrics(lower_points)
+
+        # Append metrics to their respective lists
+        upper_bboxes.append(ubbox)
+        upper_centers.append(ucenter)
+        upper_vlines.append(uvline)
+        upper_hlines.append(uhline)
+
+        lower_bboxes.append(lbbox)
+        lower_centers.append(lcenter)
+        lower_vlines.append(lvline)
+        lower_hlines.append(lhline)
+
+upper_and_lower_metrics()
+
+
+left_arm_reach = []
+right_arm_reach = []
+left_leg_reach = []
+right_lef_reach = []
+hands_distance = []
+left_side_distance = []
+fall_diagonal = []
+rise_diagonal = []
+right_side_distance = []
+feet_distance = []
+
+def body_distances():
+    global body_centers
+    global left_arm_reach, right_arm_reach, left_leg_reach, right_lef_reach
+    global hands_distance, left_side_distance, fall_diagonal
+    global rise_diagonal, right_side_distance, feet_distance
+
+
+    # Limb indices
+    limb_indices = {
+        "left_wrist": 9,
+        "right_wrist": 10,
+        "left_ankle": 15,
+        "right_ankle": 16
+    }
+
+    # Limb pairs to compute vectors between
+    limb_pairs = [
+        ("left_wrist", "right_wrist"),
+        ("left_wrist", "left_ankle"),
+        ("left_wrist", "right_ankle"),
+        ("right_wrist", "left_ankle"),
+        ("right_wrist", "right_ankle"),
+        ("left_ankle", "right_ankle")
+    ]
+
+    # Mapping for easier loop assignment
+    center_lists = {
+        "left_wrist": left_arm_reach,
+        "right_wrist": right_arm_reach,
+        "left_ankle": left_leg_reach,
+        "right_ankle": right_lef_reach
+    }
+
+    pair_lists = {
+        ("left_wrist", "right_wrist"): hands_distance,
+        ("left_wrist", "left_ankle"): left_side_distance,
+        ("left_wrist", "right_ankle"): fall_diagonal,
+        ("right_wrist", "left_ankle"): rise_diagonal,
+        ("right_wrist", "right_ankle"): right_side_distance,
+        ("left_ankle", "right_ankle"): feet_distance
+    }
+
+    # Compute vectors
+    for idx, pose in enumerate(pose_data):
+        if not pose or "keypoints" not in pose or not pose["keypoints"]:
+            # Append None for missing poses
+            for lst in center_lists.values():
+                lst.append(None)
+            for lst in pair_lists.values():
+                lst.append(None)
+            continue
+
+        keypoints = np.array(pose["keypoints"])
+        body_center = np.array(body_centers[idx])
+
+        # Vectors from center to each limb
+        limb_coords = {}
+        for name, limb_idx in limb_indices.items():
+            point = keypoints[limb_idx]
+            limb_coords[name] = point
+            vector = point - body_center
+            magnitude = float(np.linalg.norm(vector))
+            center_lists[name].append((vector.tolist(), magnitude))
+
+        # Vectors between limb pairs
+        for pair, lst in pair_lists.items():
+            v = limb_coords[pair[1]] - limb_coords[pair[0]]
+            mag = float(np.linalg.norm(v))
+            line = [limb_coords[pair[0]].tolist(), limb_coords[pair[1]].tolist()]
+            lst.append((line, mag))
+
+body_distances()
 
 def com_pos():
     data = []
@@ -112,6 +291,20 @@ def com_pos():
         data.append((x_com, y_com)) # add average keypoint pos to list
 
     com_positions = savgol_filter(np.array(data), window_length=9, polyorder=2, axis=0)
+
+def com_distance_to_body_center():
+    data = []
+    global com_positions
+    global body_centers
+
+    for com, center in zip(com_positions.tolist(), body_centers):
+        if all(a == 0 for a in com) or center is None:
+            data.append(None)
+            continue
+
+        data.append(([com, center], np.linalg.norm(np.array(com) - np.array(center)).tolist()))
+    return data
+
 def calc_joint_angles():
     global com_positions
 
@@ -192,8 +385,33 @@ keypoint_names = ["Left Shoulder", "Right Shoulder", "Left Elbow", "Right Elbow"
 
 analytics_data = [
 
+    {"category": "Body Layout", "name": "Body Bbox", "data": body_bboxes},
+    {"category": "Body Layout", "name": "Body Center", "data": body_centers},
+    {"category": "Body Layout", "name": "Horizontal Body Centerline", "data": body_horizontal_lines},
+    {"category": "Body Layout", "name": "Vertical Body Centerline", "data": body_vertical_lines},
+    {"category": "Body Layout", "name": "Upper Body Bbox", "data": upper_bboxes},
+    {"category": "Body Layout", "name": "Upper Body Center", "data": upper_centers},
+    {"category": "Body Layout", "name": "Upper Horizontal Body Centerline", "data": upper_hlines},
+    {"category": "Body Layout", "name": "Upper Vertical Body Centerline", "data": upper_vlines},
+    {"category": "Body Layout", "name": "Lower Body Bbox", "data": lower_bboxes},
+    {"category": "Body Layout", "name": "Lower Body Center", "data": lower_centers},
+    {"category": "Body Layout", "name": "Lower Horizontal Body Centerline", "data": lower_hlines},
+    {"category": "Body Layout", "name": "Lower Vertical Body Centerline", "data": lower_vlines},
+
+    {"category": "Body Distances", "name": "Left Arm Reach", "data": left_arm_reach},
+    {"category": "Body Distances", "name": "Right Arm Reach", "data": right_arm_reach},
+    {"category": "Body Distances", "name": "Left Leg Reach", "data": left_leg_reach},
+    {"category": "Body Distances", "name": "Right Leg Reach", "data": right_lef_reach},
+    {"category": "Body Distances", "name": "Hands Distance", "data": hands_distance},
+    {"category": "Body Distances", "name": "Feet Distance", "data": feet_distance},
+    {"category": "Body Distances", "name": "Left Side Distance", "data": left_side_distance},
+    {"category": "Body Distances", "name": "Right Side Distance", "data": right_side_distance},
+    {"category": "Body Distances", "name": "Fall Diagonal", "data": fall_diagonal},
+    {"category": "Body Distances", "name": "Rise Diagonal", "data": rise_diagonal},
+
     {"category": "Center of Mass", "name": "Position", "data": com_positions.tolist()},
-    {"category": "Center of Mass", "name": "Velocity", "data": com_combined_vel}]
+    {"category": "Center of Mass", "name": "Velocity", "data": com_combined_vel},
+    {"category": "Center of Mass", "name": "Distance to Body Center", "data": com_distance_to_body_center()}]
 
 
 
@@ -207,6 +425,16 @@ for i in range(12):
     analytics_data.append({"category": "Keypoint Velocities", "name": keypoint_names[i], "data": keypoint_velocities[i]})
 
 
+# Convert all NumPy arrays in your data to lists
+def convert_ndarray_to_list(obj):
+    if isinstance(obj, np.ndarray):
+        return obj.tolist()
+    if isinstance(obj, dict):
+        return {k: convert_ndarray_to_list(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [convert_ndarray_to_list(v) for v in obj]
+    return obj
+
 # Save to JSON
-with open("../data/black_v4_analytics.json", "w") as f:
-    json.dump(analytics_data, f, indent=2)
+with open("../data/red_lache_to_hook_analytics.json", "w") as f:
+    json.dump(convert_ndarray_to_list(analytics_data), f, indent=2)

@@ -1,6 +1,6 @@
 import cv2
 
-video_path = "../video/black_v4.mp4"
+video_path = "../video/red_lache_to_hook.mp4"
 cap = cv2.VideoCapture(video_path)
 
 if not cap.isOpened():
@@ -13,7 +13,7 @@ frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
 # opening the writing to the output
 fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-out = cv2.VideoWriter("../video/black_v4_fixed.mp4", fourcc, fps, (width, height))
+out = cv2.VideoWriter("../video/red_lache_to_hook_fixed.mp4", fourcc, fps, (width, height))
 
 for i in range(frame_count):
 
