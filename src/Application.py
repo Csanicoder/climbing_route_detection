@@ -8,7 +8,7 @@ from dearpygui.dearpygui import get_value
 import VideoClass
 from src.create_analytics import body_centers
 
-video_name = "red_lache_to_hook"
+video_name = "blue_v6"
 
 Video = VideoClass.Video(f"../video/{video_name}_fixed.mp4")
 
@@ -62,6 +62,7 @@ visualize_elements = [False] * len(analytics_data)
 refresh_visualize : bool = True
 do_visualize_keypoints : bool = False
 do_visualize_bones : bool = False
+do_visualize_holds : bool = False
 isVideoPaused = False
 
 def set_visualize_keypoints(sender):
@@ -71,6 +72,10 @@ def set_visualize_keypoints(sender):
 def set_visualize_bones(sender):
     global do_visualize_bones
     do_visualize_bones = dpg.get_value(sender)
+
+def set_visualize_holds(sender):
+    global do_visualize_holds
+    do_visualize_holds = dpg.get_value(sender)
 
 def visualize_keypoints(frame_index, rgb_image):
     global pose_data
@@ -106,6 +111,18 @@ def visualize_bones(frame_index, rgb_image):
 
     return result
 
+def visualize_holds(rgb_image):
+    global hold_data
+
+    result = rgb_image
+
+    for hold in hold_data:
+        p1 = hold["bbox"][:2]
+        p2 = hold["bbox"][2:]
+        result = cv2.rectangle(rgb_image, [int(a) for a in p1], [int(a) for a in p2], color=(31, 56, 158), thickness=round(4 * annotation_coefficient))
+
+    return result
+
 def display_analytics_panel(frame_index):
     for i in range(len(analytics_data)):
         display = 0
@@ -132,7 +149,8 @@ def display_analytics_panel(frame_index):
         if 33 <= i <= 40:
             display = max(0, analytics_data[i]["data"][frame_index] / 2000 + 0.5)
 
-
+        if 53 <= i <= 56:
+            display = str(analytics_data[i]["data"][frame_index])
 
         dpg.set_value("e" + str(i), display)
 
@@ -241,6 +259,18 @@ def visualize(element_id, rgb_image, frame_index):
         result = cv2.circle(result, (np.array(keypoint_pos) + np.array(vel)).tolist(), radius=round(8 * annotation_coefficient), color=(0, 255, 255), thickness=-1)
         return result
 
+    elif 53 <= element_id <= 56:
+
+        hold_index = analytics_data[element_id]["data"][frame_index]
+
+        if not analytics_data[element_id] or not hold_index:
+            return rgb_image
+
+
+        color_map = [(80, 156, 131), (93, 147, 214), (224, 62, 179), (235, 81, 53)]
+        p1 = hold_data[hold_index]["bbox"][:2]
+        p2 = hold_data[hold_index]["bbox"][2:]
+        return cv2.rectangle(rgb_image, [int(a) for a in p1], [int(a) for a in p2], color=color_map[element_id - 53], thickness=round(8 * annotation_coefficient))
 
     return rgb_image
 
@@ -283,6 +313,9 @@ def update_frame():
     else: # Frame slider is inactive
         frame = Video.next()
         dpg.set_value("frame_data", Video.get_index())
+
+    if do_visualize_holds:
+        frame = visualize_holds(frame)
 
     if do_visualize_bones:
         frame = visualize_bones(frame_idx, frame)
@@ -352,6 +385,8 @@ with dpg.window(tag="Primary Window"):
                 dpg.add_checkbox(label="Visualize keypoints", indent=10, callback=set_visualize_keypoints, default_value=do_visualize_keypoints)
 
                 dpg.add_checkbox(label="Visualize bones", indent=10, callback=set_visualize_bones, default_value=do_visualize_bones)
+
+                dpg.add_checkbox(label="Visualize holds", indent=10, callback=set_visualize_holds, default_value=do_visualize_holds)
 
 
         dpg.add_spacer(width=100)

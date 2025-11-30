@@ -5,11 +5,11 @@ import numpy as np
 from scipy.signal import savgol_filter
 
 # Load Holds JSON file
-with open("../data/red_lache_to_hook_holds.json") as hold_f:
+with open("../data/blue_v6_holds.json") as hold_f:
     hold_data = json.load(hold_f)
 
 # Load Pose JSON file
-with open("../data/red_lache_to_hook_pose_smoothed.json") as pose_f:
+with open("../data/blue_v6_pose_smoothed.json") as pose_f:
     pose_data = json.load(pose_f)
 
 frame_count = len(pose_data)
@@ -365,6 +365,44 @@ def calculate_keypoint_velocities(): # calculate velocities for each keypoint
         keypoint_velocities.append(combined_vel)
 
 
+def wall_contact(limb_index):
+    global hold_data
+    global pose_data
+    global keypoint_velocities
+
+    limb_keypoint_map = {0: 9, 1: 10, 2: 15, 3: 16}
+
+    keypoint_index = limb_keypoint_map[limb_index]
+
+    data = []
+
+    for pose in pose_data:
+
+        i = pose_data.index(pose)
+
+        if not pose:
+            data.append(None)
+            continue
+
+        for hold in hold_data:
+            keypoint_pos = pose["keypoints"][keypoint_index]
+
+            keypoint_vel = keypoint_velocities[keypoint_index - 5][i][1]
+            hold_bbox = hold["bbox"]
+
+            if keypoint_vel < 200 and hold_bbox[0] < keypoint_pos[0] < hold_bbox[2] and hold_bbox[1] < keypoint_pos[1] < hold_bbox[3]:
+                data.append(hold_data.index(hold))
+                break
+
+        if len(data) <= i:
+            data.append(None)
+
+
+    return data
+
+
+
+
 com_pos()
 com_vel = smooth_differentiate(com_positions, 1 / fps, 0)
 com_speed = np.stack([speed_from_velocity(com_vel)]*2, axis=1)
@@ -413,8 +451,6 @@ analytics_data = [
     {"category": "Center of Mass", "name": "Velocity", "data": com_combined_vel},
     {"category": "Center of Mass", "name": "Distance to Body Center", "data": com_distance_to_body_center()}]
 
-
-
 for i in range(8):
     analytics_data.append({"category": "Joint Angles", "name": joint_names[i], "data": joint_angles[i]})
 
@@ -423,6 +459,11 @@ for i in range(8):
 
 for i in range(12):
     analytics_data.append({"category": "Keypoint Velocities", "name": keypoint_names[i], "data": keypoint_velocities[i]})
+
+analytics_data.append({"category": "Wall Contacts", "name": "Left Hand", "data": wall_contact(0)})
+analytics_data.append({"category": "Wall Contacts", "name": "Right Hand", "data": wall_contact(1)})
+analytics_data.append({"category": "Wall Contacts", "name": "Left Foot", "data": wall_contact(2)})
+analytics_data.append({"category": "Wall Contacts", "name": "Right Foot", "data": wall_contact(3)})
 
 
 # Convert all NumPy arrays in your data to lists
@@ -436,5 +477,5 @@ def convert_ndarray_to_list(obj):
     return obj
 
 # Save to JSON
-with open("../data/red_lache_to_hook_analytics.json", "w") as f:
+with open("../data/blue_v6_analytics.json", "w") as f:
     json.dump(convert_ndarray_to_list(analytics_data), f, indent=2)
