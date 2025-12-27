@@ -1,15 +1,14 @@
 import json
-from typing import Callable
 
 import numpy as np
 from scipy.signal import savgol_filter
 
 # Load Holds JSON file
-with open("../data/blue_v6_holds.json") as hold_f:
+with open("../data/black_v4_holds.json") as hold_f:
     hold_data = json.load(hold_f)
 
 # Load Pose JSON file
-with open("../data/blue_v6_pose_smoothed.json") as pose_f:
+with open("../data/black_v4_pose_smoothed.json") as pose_f:
     pose_data = json.load(pose_f)
 
 frame_count = len(pose_data)
@@ -31,11 +30,6 @@ def smooth_differentiate(values : np.ndarray, delta_t : float, axis : int):
 def speed_from_velocity(velocities : np.ndarray):
     return np.linalg.norm(velocities, axis=1)
 
-def filter_if(ar : np.ndarray, condition : Callable[..., bool]):
-    return [x for x in ar if condition(x)]
-
-def count_if(ar : np.ndarray, condition : Callable[..., bool]):
-    return np.sum([1 for x in ar if condition(x)])
 
 
 com_positions = np.array(None)
@@ -390,7 +384,7 @@ def wall_contact(limb_index):
             keypoint_vel = keypoint_velocities[keypoint_index - 5][i][1]
             hold_bbox = hold["bbox"]
 
-            if keypoint_vel < 200 and hold_bbox[0] < keypoint_pos[0] < hold_bbox[2] and hold_bbox[1] < keypoint_pos[1] < hold_bbox[3]:
+            if hold_bbox[0] < keypoint_pos[0] < hold_bbox[2] and hold_bbox[1] < keypoint_pos[1] < hold_bbox[3]:
                 data.append(hold_data.index(hold))
                 break
 
@@ -477,5 +471,5 @@ def convert_ndarray_to_list(obj):
     return obj
 
 # Save to JSON
-with open("../data/blue_v6_analytics.json", "w") as f:
+with open("../data/black_v4_analytics.json", "w") as f:
     json.dump(convert_ndarray_to_list(analytics_data), f, indent=2)

@@ -1,3 +1,12 @@
-list = [1, 2, 3, 4, 5, 6]
+import dearpygui.dearpygui as dpg
+import dearpygui.demo as demo
 
-print(list.index(6))
+dpg.create_context()
+dpg.create_viewport(title='Custom Title', width=600, height=600)
+
+demo.show_demo()
+
+dpg.setup_dearpygui()
+dpg.show_viewport()
+dpg.start_dearpygui()
+dpg.destroy_context()

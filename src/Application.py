@@ -3,10 +3,8 @@ import time
 import dearpygui.dearpygui as dpg
 import cv2
 import numpy as np
-from dearpygui.dearpygui import get_value
 
 import VideoClass
-from src.create_analytics import body_centers
 
 video_name = "blue_v6"
 
@@ -23,6 +21,9 @@ with open(f"../data/{video_name}_pose_smoothed.json") as pose_f:
 # Load Pose JSON file with analytics
 with open(f"../data/{video_name}_analytics.json") as analytics_f:
     analytics_data = json.load(analytics_f)
+
+with open(f"../data/{video_name}_summary.json") as summary_f:
+    summary_data = json.load(summary_f)
 
 
 viewport_width = 1920
@@ -297,6 +298,70 @@ def on_space_pressed(sender, app_data):
 with dpg.handler_registry():
     dpg.add_key_press_handler(callback=on_space_pressed)
 
+
+object_colormap = [
+                (30, 30, 30),  # 0  = no contact (dark gray)
+
+                # 1–47 = objects 0–46
+                (230, 25, 75),
+                (60, 180, 75),
+                (255, 225, 25),
+                (0, 130, 200),
+                (245, 130, 48),
+                (145, 30, 180),
+                (70, 240, 240),
+                (240, 50, 230),
+                (210, 245, 60),
+                (250, 190, 190),
+
+                (0, 128, 128),
+                (230, 190, 255),
+                (170, 110, 40),
+                (255, 250, 200),
+                (128, 0, 0),
+                (170, 255, 195),
+                (128, 128, 0),
+                (255, 215, 180),
+                (0, 0, 128),
+                (128, 128, 128),
+
+                (255, 99, 71),
+                (154, 205, 50),
+                (70, 130, 180),
+                (218, 112, 214),
+                (255, 165, 0),
+                (0, 191, 255),
+                (186, 85, 211),
+                (46, 139, 87),
+                (255, 105, 180),
+                (244, 164, 96),
+
+                (72, 61, 139),
+                (60, 179, 113),
+                (123, 104, 238),
+                (32, 178, 170),
+                (219, 112, 147),
+                (176, 196, 222),
+                (188, 143, 143),
+                (135, 206, 235),
+                (255, 182, 193),
+                (95, 158, 160),
+
+                (175, 238, 238),
+                (152, 251, 152),
+                (221, 160, 221),
+                (255, 228, 181),
+                (176, 224, 230),
+                (240, 230, 140),
+                (255, 160, 122),
+            ]
+with dpg.colormap_registry():
+    dpg.add_colormap(
+        tag="object_contacts",
+        colors=object_colormap,
+        qualitative=True
+    )
+
 #---------------------------------
 #    Update video method
 #---------------------------------
@@ -343,7 +408,7 @@ def update_frame():
 #                 Main window
 #---------------------------------------------------
 
-with dpg.window(tag="Primary Window"):
+with (dpg.window(tag="Primary Window")):
 
     dpg.add_tab_bar(tag="tabs")
 
@@ -437,7 +502,56 @@ with dpg.window(tag="Primary Window"):
                     else:
                         dpg.add_text("", tag="e" + str(i))
 
+    with dpg.group(parent=SUM):
+        for element in summary_data:
 
+            if not dpg.does_item_exist("v" + element["category"]):  # if the category header doesn't exist, make it
+                dpg.add_collapsing_header(label=element["category"], tag="v" + element["category"], default_open=True)
+                dpg.add_spacer(height=10)
+
+        dpg.add_group(tag="HoldUsageGroup", horizontal=True, parent="vHold Usage")
+
+        with dpg.plot(tag="Hold Usage Plot", height=400, width=520, parent="HoldUsageGroup", no_inputs=True):
+            dpg.add_plot_legend(outside=True)
+            dpg.add_plot_axis(dpg.mvYAxis, no_label=True, no_gridlines=True, no_tick_labels=True)
+            with dpg.plot_axis(dpg.mvXAxis, no_label=True, no_gridlines=True, no_tick_labels=True):
+                dpg.add_pie_series(0.5, 0.5, 0.4, [element["data"] for element in summary_data[:5]], [element["name"] for element in summary_data[:5]], format="%.3f")
+
+        with dpg.plot(tag="Wall Contacts Plot", parent="HoldUsageGroup", height=400, width=-1):
+
+
+            def encode(obj_id):
+                return 0 if obj_id is None else obj_id + 1
+
+            raw_contact_data = []
+            for limb in analytics_data[53:57]:
+                raw_contact_data += limb["data"]
+
+            heatmap_data = [encode(obj_id) for obj_id in raw_contact_data]
+
+
+            x_axis = dpg.add_plot_axis(dpg.mvXAxis, label="Frame")
+            y_axis = dpg.add_plot_axis(dpg.mvYAxis, label="Limb")
+            dpg.set_axis_limits_constraints(y_axis, 0, 4)
+            dpg.set_axis_limits_constraints(x_axis, 0, Video.FRAME_COUNT - 1)
+            dpg.set_axis_zoom_constraints(y_axis, 4, 4)
+
+            dpg.set_axis_ticks(y_axis, (("Left Hand", 3.5), ("Right Hand", 2.5), ("Left Foot", 1.5), ("Right Foot", 0.5)))
+
+            dpg.add_plot_legend(outside=True)
+            dpg.add_heat_series(
+                x=heatmap_data,
+                rows=4,
+                cols=Video.FRAME_COUNT,
+                scale_min=0,
+                scale_max=47,
+                bounds_min=[0,0],
+                bounds_max=[Video.FRAME_COUNT - 1, 4],
+                parent=y_axis,
+                format=""
+            )
+
+            dpg.bind_colormap("Wall Contacts Plot", "object_contacts")
 
 dpg.bind_font(font)
 
