@@ -300,7 +300,7 @@ with dpg.handler_registry():
 
 
 object_colormap = [
-                (30, 30, 30),  # 0  = no contact (dark gray)
+                (37, 37, 38),  # 0  = no contact (dark gray)
 
                 # 1–47 = objects 0–46
                 (230, 25, 75),
@@ -403,6 +403,24 @@ def update_frame():
 
     return frame_idx
 
+def jump_to_frame(sender, app_data):
+    global isVideoPaused
+    if not dpg.is_item_hovered("Wall Contacts Plot"):
+        return
+
+    x, y = dpg.get_plot_mouse_pos()
+
+    col = int(x)  # frame index
+    row = int(y)
+
+    dpg.set_value("frame_data", col)
+    isVideoPaused = False
+    start_stop_button()
+
+    dpg.set_value("v"+str(56 - row), True)
+    visualize_element("v"+str(56 - row), True)
+
+    dpg.set_value("tabs", "detailedTab")
 
 #---------------------------------------------------
 #                 Main window
@@ -412,8 +430,8 @@ with (dpg.window(tag="Primary Window")):
 
     dpg.add_tab_bar(tag="tabs")
 
-    RT = dpg.add_tab(label="Detailed", parent="tabs")
-    SUM = dpg.add_tab(label="Summary", parent="tabs")
+    RT = dpg.add_tab(label="Detailed", parent="tabs", tag="detailedTab")
+    SUM = dpg.add_tab(label="Summary", parent="tabs", tag="summaryTab")
 
     with dpg.group(horizontal=True, parent=RT):
 
@@ -423,7 +441,7 @@ with (dpg.window(tag="Primary Window")):
 
         with dpg.child_window(width=400, border=False):
 
-            with dpg.child_window(tag="visualizations", no_scrollbar=True, height=viewport_height - 130, menubar=True, resizable_y=True):
+            with dpg.child_window(tag="visualizations", height=viewport_height - 130, menubar=True, resizable_y=True):
 
                 with dpg.menu_bar():
                     dpg.add_menu(label="Visualizations", enabled=False)
@@ -442,7 +460,7 @@ with (dpg.window(tag="Primary Window")):
 
 
 
-            with dpg.child_window(tag="detected_data", no_scrollbar=True, menubar=True):
+            with dpg.child_window(tag="detected_data", menubar=True):
 
                 with dpg.menu_bar():
                     dpg.add_menu(label="External Data", enabled=False)
@@ -480,7 +498,7 @@ with (dpg.window(tag="Primary Window")):
         #                        Analytics
         # ---------------------------------------------------------------
 
-        with dpg.child_window(tag="analytics", no_scrollbar=True, menubar=True):
+        with dpg.child_window(tag="analytics", menubar=True):
 
             with dpg.menu_bar():
                 dpg.add_menu(label="Analytics", enabled=False)
@@ -550,6 +568,9 @@ with (dpg.window(tag="Primary Window")):
                 parent=y_axis,
                 format=""
             )
+
+            with dpg.handler_registry():
+                dpg.add_mouse_click_handler(callback=jump_to_frame)
 
             dpg.bind_colormap("Wall Contacts Plot", "object_contacts")
 
