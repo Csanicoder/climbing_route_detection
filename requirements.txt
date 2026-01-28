@@ -19,7 +19,9 @@ matplotlib~=3.9.4
 Pillow<10
 dearpygui~=2.1.0
 
+scipy~=1.13.1
+datamodel-code-generator==0.45.0
+
 #--------------------------------------------------------------------------------------
 # To install, run 'pip install -r requirements.txt' in conda enviroment with python 3.9
 #--------------------------------------------------------------------------------------
-scipy~=1.13.1

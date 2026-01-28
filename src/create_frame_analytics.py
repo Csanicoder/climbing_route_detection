@@ -396,19 +396,19 @@ def block_fill(a_list, error_threshold : int):
     number_of_items = 1
 
     packed_list = pack(a_list)
-    for i, item in enumerate(packed_list[1:len(packed_list) - 1]): #correct error by filling in short None-s between data
+    for i, item in enumerate(packed_list[1:len(packed_list) - 1]): #correct error by filling in short -1-s between data
         left_item_identifier = packed_list[i][item_identifier]
         right_item_identifier = packed_list[i + 2][item_identifier]
 
-        if (left_item_identifier == right_item_identifier is not None) and item[number_of_items] <= error_threshold:
-            packed_list[i + 1] = (left_item_identifier, item[1])
+        if (left_item_identifier == right_item_identifier != -1) and item[number_of_items] <= error_threshold:
+            packed_list[i + 1] = (left_item_identifier, item[number_of_items])
 
-    for i, item in enumerate(packed_list[1:len(packed_list) - 1]): #correct error by erasing in short data between None-s
-        left_item_identifier = packed_list[i][item_identifier]
-        right_item_identifier = packed_list[i + 2][item_identifier]
+    packed_list = pack(unpack(packed_list))
 
-        if (left_item_identifier == right_item_identifier is None) and item[number_of_items] <= error_threshold:
-            packed_list[i + 1] = (left_item_identifier, item[1])
+    for i, item in enumerate(packed_list[1:len(packed_list) - 1]): #correct error by erasing in short data between -1-s
+
+        if item[number_of_items] <= error_threshold:
+            packed_list[i + 1] = (-1, item[number_of_items])
 
     return unpack(packed_list)
 
@@ -428,7 +428,7 @@ def wall_contact(limb_index):
         i = pose_data.index(pose)
 
         if not pose:
-            data.append(None)
+            data.append(-1)
             continue
 
         for hold in hold_data:
@@ -441,10 +441,10 @@ def wall_contact(limb_index):
                 data.append(hold_data.index(hold))
                 break
 
-        if len(data) <= i:
-            data.append(None)
+        if len(data) <= i: #if the limb doesn't hold anything, append -1
+            data.append(-1)
 
-        data = block_fill(data, 5)
+    data = block_fill(data, 20)
 
 
     return data

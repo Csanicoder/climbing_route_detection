@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["HoldUsageSummary", "HoldUsageMap"],
+  "properties": {
+
+    "HoldUsageSummary": {
+      "type": "object",
+      "required": [
+        "limb0",
+        "limb1",
+        "limb2",
+        "limb3",
+        "limb4"
+      ],
+      "properties": {
+        "limb0": { "type": "number" },
+        "limb1": { "type": "number" },
+        "limb2": { "type": "number" },
+        "limb3": { "type": "number" },
+        "limb4": { "type": "number" }
+      },
+      "additionalProperties": false
+    },
+
+    "HoldUsageMap": {
+      "type": "object",
+      "required": [
+        "left_hand",
+        "right_hand",
+        "left_foot",
+        "right_foot"
+      ],
+      "properties": {
+        "left_hand": {
+          "type": "array",
+          "items": { "type": "integer" }
+        },
+        "right_hand": {
+          "type": "array",
+          "items": { "type": "integer" }
+        },
+        "left_foot": {
+          "type": "array",
+          "items": { "type": "integer" }
+        },
+        "right_foot": {
+          "type": "array",
+          "items": { "type": "integer" }
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "RouteSegmentation": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "start_frame",
+          "end_frame"
+        ],
+        "properties": {
+          "start_frame": {
+            "type": "integer"
+          },
+          "end_frame": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+
+  },
+  "additionalProperties": false
+}

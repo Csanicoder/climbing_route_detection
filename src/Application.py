@@ -5,6 +5,7 @@ import cv2
 import numpy as np
 
 import VideoClass
+import plots.AbstractPlot
 
 video_name = "blue_v6"
 
@@ -264,7 +265,7 @@ def visualize(element_id, rgb_image, frame_index):
 
         hold_index = analytics_data[element_id]["data"][frame_index]
 
-        if not analytics_data[element_id] or not hold_index:
+        if not analytics_data[element_id] or hold_index == -1:
             return rgb_image
 
 
@@ -290,13 +291,16 @@ def set_fps(sender):
     global PLAYBACK_FPS
     PLAYBACK_FPS = dpg.get_value(sender)
 
-def on_space_pressed(sender, app_data):
+def on_key_pressed(sender, app_data):
+    global isVideoPaused
     # app_data will contain the key that was pressed
     if app_data == dpg.mvKey_Spacebar:
         start_stop_button()
 
+
+
 with dpg.handler_registry():
-    dpg.add_key_press_handler(callback=on_space_pressed)
+    dpg.add_key_press_handler(callback=on_key_pressed)
 
 
 object_colormap = [
@@ -521,58 +525,57 @@ with (dpg.window(tag="Primary Window")):
                         dpg.add_text("", tag="e" + str(i))
 
     with dpg.group(parent=SUM):
-        for element in summary_data:
 
-            if not dpg.does_item_exist("v" + element["category"]):  # if the category header doesn't exist, make it
-                dpg.add_collapsing_header(label=element["category"], tag="v" + element["category"], default_open=True)
-                dpg.add_spacer(height=10)
+        with dpg.group(tag="HoldUsageGroup", horizontal=True):
 
-        dpg.add_group(tag="HoldUsageGroup", horizontal=True, parent="vHold Usage")
+            with dpg.plot(label ="Hold Usage Plot", tag="Hold Usage Plot", height=500, width=480, no_inputs=True):
+                dpg.add_plot_legend()
+                dpg.add_plot_axis(dpg.mvYAxis, no_label=True, no_gridlines=True, no_tick_labels=True)
+                with dpg.plot_axis(dpg.mvXAxis, no_label=True, no_gridlines=True, no_tick_labels=True):
+                    dpg.add_pie_series(0.5, 0.5, 0.4, [element for element in summary_data["HoldUsageSummary"].values()], ["4 limbs", "3 limbs", "2 limbs", "1 limb", "0 limbs", ], format="%.1f")
 
-        with dpg.plot(tag="Hold Usage Plot", height=400, width=520, parent="HoldUsageGroup", no_inputs=True):
-            dpg.add_plot_legend(outside=True)
-            dpg.add_plot_axis(dpg.mvYAxis, no_label=True, no_gridlines=True, no_tick_labels=True)
-            with dpg.plot_axis(dpg.mvXAxis, no_label=True, no_gridlines=True, no_tick_labels=True):
-                dpg.add_pie_series(0.5, 0.5, 0.4, [element["data"] for element in summary_data[:5]], [element["name"] for element in summary_data[:5]], format="%.3f")
-
-        with dpg.plot(tag="Wall Contacts Plot", parent="HoldUsageGroup", height=400, width=-1):
+            with dpg.plot(label ="Wall Contacts Plot" ,tag="Wall Contacts Plot", height=500, width=-1):
 
 
-            def encode(obj_id):
-                return 0 if obj_id is None else obj_id + 1
+                def encode(obj_id):
+                    return 0 if obj_id is None else obj_id + 1
 
-            raw_contact_data = []
-            for limb in analytics_data[53:57]:
-                raw_contact_data += limb["data"]
+                raw_contact_data = []
+                for limb_data in summary_data["HoldUsageMap"].values():
+                    raw_contact_data += limb_data
 
-            heatmap_data = [encode(obj_id) for obj_id in raw_contact_data]
+                heatmap_data = [encode(obj_id) for obj_id in raw_contact_data]
 
 
-            x_axis = dpg.add_plot_axis(dpg.mvXAxis, label="Frame")
-            y_axis = dpg.add_plot_axis(dpg.mvYAxis, label="Limb")
-            dpg.set_axis_limits_constraints(y_axis, 0, 4)
-            dpg.set_axis_limits_constraints(x_axis, 0, Video.FRAME_COUNT - 1)
-            dpg.set_axis_zoom_constraints(y_axis, 4, 4)
+                x_axis = dpg.add_plot_axis(dpg.mvXAxis, label="Frame")
+                y_axis = dpg.add_plot_axis(dpg.mvYAxis, label="Limb")
+                dpg.set_axis_limits_constraints(y_axis, 0, 4)
+                dpg.set_axis_limits_constraints(x_axis, 0, Video.FRAME_COUNT - 1)
+                dpg.set_axis_zoom_constraints(y_axis, 4, 4)
 
-            dpg.set_axis_ticks(y_axis, (("Left Hand", 3.5), ("Right Hand", 2.5), ("Left Foot", 1.5), ("Right Foot", 0.5)))
+                dpg.set_axis_ticks(y_axis, (("Left Hand", 3.5), ("Right Hand", 2.5), ("Left Foot", 1.5), ("Right Foot", 0.5)))
 
-            dpg.add_plot_legend(outside=True)
-            dpg.add_heat_series(
-                x=heatmap_data,
-                rows=4,
-                cols=Video.FRAME_COUNT,
-                scale_min=0,
-                scale_max=47,
-                bounds_min=[0,0],
-                bounds_max=[Video.FRAME_COUNT - 1, 4],
-                parent=y_axis,
-                format=""
-            )
+                dpg.add_plot_legend(outside=True)
+                dpg.add_heat_series(
+                    x=heatmap_data,
+                    rows=4,
+                    cols=Video.FRAME_COUNT,
+                    scale_min=0,
+                    scale_max=47,
+                    bounds_min=[0,0],
+                    bounds_max=[Video.FRAME_COUNT - 1, 4],
+                    parent=y_axis,
+                    format=""
+                )
 
-            with dpg.handler_registry():
-                dpg.add_mouse_click_handler(callback=jump_to_frame)
+                with dpg.handler_registry():
+                    dpg.add_mouse_click_handler(callback=jump_to_frame)
 
-            dpg.bind_colormap("Wall Contacts Plot", "object_contacts")
+                dpg.bind_colormap("Wall Contacts Plot", "object_contacts")
+
+            #with dpg.plot(tag="")
+
+
 
 dpg.bind_font(font)
 
