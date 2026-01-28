@@ -2,7 +2,7 @@ import json
 import numpy as np
 from typing import Callable
 
-from src.dsl.summary import SummaryData, HoldUsageSummary, HoldUsageMap
+from src.dsl.summary import SummaryData, HoldUsageSummary, HoldUsageMap, RouteSegmentationItem
 
 import argparse
 from pathlib import Path
@@ -62,6 +62,22 @@ def count_if(ar : np.ndarray, condition : Callable[..., bool]):
 def round_to_n_digits(number, n : int = 0):
     return round(number * 10 ** n) / 10 ** n
 
+def pack(a_list):
+    out = []
+    count = 1
+    prev = a_list[0]
+
+    for item in a_list[1:]:
+        if item != prev:
+            out.append((prev, count))
+            count = 1
+            prev = item
+        else:
+            count += 1
+
+    out.append((prev, count))
+    return out
+
 
 def time_spent_on_n_contacts(n : int) -> float:
     left_hand = analytics_data[53]["data"]
@@ -93,9 +109,52 @@ hold_usage_map = HoldUsageMap(
     right_foot = analytics_data[56]["data"]
 )
 
+list_a = pack(analytics_data[53]["data"]) # left hand
+list_b = pack(analytics_data[54]["data"]) # right hand
+
+
+route_seg = []
+
+frame_index = list_a[0][1]
+for item in list_a[1:len(list_a) - 1]: # left hand
+
+    if item[0] == -1:
+        route_seg.append((frame_index,
+                          frame_index + item[1],
+                          0))
+    frame_index += item[1]
+
+frame_index = list_b[0][1]
+for item in list_b[1:len(list_b) - 1]: # right hand
+
+    if item[0] == -1:
+        route_seg.append((frame_index,
+                          frame_index + item[1],
+                          1))
+    frame_index += item[1]
+
+
+
+route_seg.sort()
+print(route_seg)
+
+route_seg_final = []
+
+for move in route_seg:
+    route_seg_final.append(
+        RouteSegmentationItem(
+            start_frame=move[0],
+            end_frame=move[1],
+            limb_index=move[2]
+        )
+    )
+
+
+
 summary_data = SummaryData(
     HoldUsageSummary=hold_usage_summary,
-    HoldUsageMap=hold_usage_map
+    HoldUsageMap=hold_usage_map,
+    RouteSegmentation=route_seg_final
 )
 
 
