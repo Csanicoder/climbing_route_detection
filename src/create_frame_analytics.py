@@ -1,22 +1,60 @@
 import json
+import os.path
 
 import numpy as np
 from scipy.signal import savgol_filter
-# Load Holds JSON file
+
+import argparse
+from pathlib import Path
+
+print("Started running analytics generation!")
+
+parser = argparse.ArgumentParser(
+    description="Process Frame Analytics Data"
+)
+
+parser.add_argument(
+    "--route_name",
+    type=str,
+    help="Common name of route"
+)
+
+parser.add_argument(
+    "--data_dir",
+    type=Path,
+    help="Path to directory output will go to"
+)
+
+parser.add_argument(
+    "--holds_file",
+    type=str,
+    help="Ending of holds file from the route name"
+)
+
+parser.add_argument(
+    "--pose_file",
+    type=str,
+    help="Ending of pose file from the route name"
+)
+
+parser.add_argument(
+    "--output",
+    "-o",
+    type=str,
+    help="Extension of output"
+)
+
+args = parser.parse_args()
 
 
-video_name = "blue_v6"
-
-
-with open(f"../data/{video_name}_holds.json") as hold_f:
+with open(os.path.join(args.data_dir, args.route_name + args.holds_file)) as hold_f:
     hold_data = json.load(hold_f)
 
 # Load Pose JSON file
-with open(f"../data/{video_name}_pose_smoothed.json") as pose_f:
+with open(os.path.join(args.data_dir, args.route_name + args.pose_file)) as pose_f:
     pose_data = json.load(pose_f)
 
 frame_count = len(pose_data)
-print(frame_count)
 
 fps = 30
 
@@ -190,16 +228,6 @@ def body_distances():
         "left_ankle": 15,
         "right_ankle": 16
     }
-
-    # Limb pairs to compute vectors between
-    limb_pairs = [
-        ("left_wrist", "right_wrist"),
-        ("left_wrist", "left_ankle"),
-        ("left_wrist", "right_ankle"),
-        ("right_wrist", "left_ankle"),
-        ("right_wrist", "right_ankle"),
-        ("left_ankle", "right_ankle")
-    ]
 
     # Mapping for easier loop assignment
     center_lists = {
@@ -432,14 +460,17 @@ def wall_contact(limb_index):
             continue
 
         for hold in hold_data:
-            keypoint_pos = pose["keypoints"][keypoint_index]
+            keypoint_pos = [int(x) for x in pose["keypoints"][keypoint_index]]
 
-            keypoint_vel = keypoint_velocities[keypoint_index - 5][i][1]
+
             hold_bbox = hold["bbox"]
 
-            if hold_bbox[0] < keypoint_pos[0] < hold_bbox[2] and hold_bbox[1] < keypoint_pos[1] < hold_bbox[3]:
+            if hold_bbox[0] <= keypoint_pos[0] <= hold_bbox[2] and hold_bbox[1] <= keypoint_pos[1] <= hold_bbox[3]:
                 data.append(hold_data.index(hold))
                 break
+                #if hold["cut_mask"][keypoint_pos[1] - hold_bbox[1]][keypoint_pos[0] - hold_bbox[0]]: # if keypoint position pixel is true in hold mask
+                #    data.append(hold_data.index(hold))
+                #    break
 
         if len(data) <= i: #if the limb doesn't hold anything, append -1
             data.append(-1)
@@ -526,5 +557,7 @@ def convert_ndarray_to_list(obj):
     return obj
 
 # Save to JSON
-with open(f"../data/{video_name}_analytics.json", "w") as f:
+with open(os.path.join(args.data_dir, args.route_name + args.output), "w") as f:
     json.dump(convert_ndarray_to_list(analytics_data), f, indent=2)
+
+print("Analytics data saved successfully!")

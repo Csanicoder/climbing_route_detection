@@ -1,4 +1,6 @@
 import json
+import os.path
+
 import numpy as np
 from typing import Callable
 
@@ -7,45 +9,59 @@ from src.dsl.summary import SummaryData, HoldUsageSummary, HoldUsageMap, RouteSe
 import argparse
 from pathlib import Path
 
+print("Started running summary generation!")
+
 parser = argparse.ArgumentParser(
     description="Process Summary Data"
 )
 
 parser.add_argument(
-    "--holds_file",
+    "--route_name",
+    type=str,
+    help="Common name of route"
+)
+
+parser.add_argument(
+    "--data_dir",
     type=Path,
-    help="Path to holds file"
+    help="Path to directory output will go to"
+)
+
+parser.add_argument(
+    "--holds_file",
+    type=str,
+    help="Ending of holds file from the route name"
 )
 
 parser.add_argument(
     "--pose_file",
-    type=Path,
-    help="Path to pose file"
+    type=str,
+    help="Ending of pose file from the route name"
 )
 
 parser.add_argument(
-    "--frame_analytics_file",
-    type=Path,
-    help="Path to frame analytics file"
+    "--analytics_file",
+    type=str,
+    help="Ending of analytics file from the route name"
 )
 
 parser.add_argument(
-    "-o",
     "--output",
-    type=Path,
-    help="Path to output file"
+    "-o",
+    type=str,
+    help="Extension of output"
 )
 
 args = parser.parse_args()
 
-with open(args.holds_file) as hold_f:
+with open(os.path.join(args.data_dir, args.route_name + args.holds_file)) as hold_f:
     hold_data = json.load(hold_f)
 
 # Load Pose JSON file
-with open(args.pose_file) as pose_f:
+with open(os.path.join(args.data_dir, args.route_name + args.pose_file)) as pose_f:
     pose_data = json.load(pose_f)
 
-with open(args.frame_analytics_file) as analytics_f:
+with open(os.path.join(args.data_dir, args.route_name + args.analytics_file)) as analytics_f:
     analytics_data = json.load(analytics_f)
 
 frame_count = len(pose_data)
@@ -112,31 +128,64 @@ hold_usage_map = HoldUsageMap(
 list_a = pack(analytics_data[53]["data"]) # left hand
 list_b = pack(analytics_data[54]["data"]) # right hand
 
-
 route_seg = []
 
+# left hand
 frame_index = list_a[0][1]
-for item in list_a[1:len(list_a) - 1]: # left hand
+for i in range(1, len(list_a) - 1):
+
+    item = list_a[i]
+    prev_item_id = list_a[i - 1][0] # id of previous hold
+    next_item_id = list_a[i + 1][0] # id of next hold
 
     if item[0] == -1:
         route_seg.append((frame_index,
                           frame_index + item[1],
-                          0))
+                          0,
+                          prev_item_id,
+                          next_item_id))
     frame_index += item[1]
 
+
+ # right hand
 frame_index = list_b[0][1]
-for item in list_b[1:len(list_b) - 1]: # right hand
+for i in range(1, len(list_b) - 1):
+
+    item = list_b[i]
+    prev_item_id = list_b[i - 1][0] # id of previous hold
+    next_item_id = list_b[i + 1][0] # id of next hold
 
     if item[0] == -1:
         route_seg.append((frame_index,
                           frame_index + item[1],
-                          1))
+                          1,
+                          prev_item_id,
+                          next_item_id))
     frame_index += item[1]
 
 
 
 route_seg.sort()
-print(route_seg)
+
+frame_move_map = [-1] * route_seg[0][0] # fill -1 until first move
+
+
+for index, move in enumerate(route_seg[:len(route_seg) - 1]): # enumerate up to the last move (exclusive)
+    move_length = move[1] - move[0] + 1 # the number of frames to append for each move
+    frame_move_map += [index] * move_length
+
+    rest_length = route_seg[index + 1][0] - move[1] - 1 # the number of frames between this and the next move
+    frame_move_map += [-1 * (index + 2)] * rest_length
+
+# finish off with the last move and the last rest
+last_move = route_seg[len(route_seg) - 1]
+last_move_length = last_move[1] - last_move[0] + 1 # the number of frames to append for last move
+frame_move_map += [len(route_seg) - 1] * last_move_length # append the last index
+
+last_rest_length = frame_count - last_move[1] - 1
+frame_move_map += [-1 * (len(route_seg) + 1)] * last_rest_length
+
+
 
 route_seg_final = []
 
@@ -145,7 +194,9 @@ for move in route_seg:
         RouteSegmentationItem(
             start_frame=move[0],
             end_frame=move[1],
-            limb_index=move[2]
+            limb_index=move[2],
+            hold_from=move[3],
+            hold_to=move[4]
         )
     )
 
@@ -154,10 +205,13 @@ for move in route_seg:
 summary_data = SummaryData(
     HoldUsageSummary=hold_usage_summary,
     HoldUsageMap=hold_usage_map,
-    RouteSegmentation=route_seg_final
+    RouteSegmentation=route_seg_final,
+    FrameMoveMap=frame_move_map
 )
 
 
 # Save to JSON
-with open(args.output, "w") as f:
+with open(os.path.join(args.data_dir, args.route_name + args.output), "w") as f:
     f.write(summary_data.model_dump_json(indent=2))
+
+print("Summary data saved successfully!")

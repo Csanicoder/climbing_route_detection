@@ -1,5 +1,3 @@
-- body bbox centroid and center of mass distance
 - how much time spent using x hold
-- how much time spent on less than 4 limbs
 - warnings list (small angle, high velocity, center of mass disbalance, etc.)
 - analytics summary panel (min, max, mean, median, standard deviation) + graph

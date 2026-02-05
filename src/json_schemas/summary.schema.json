@@ -59,7 +59,9 @@
         "required": [
           "start_frame",
           "end_frame",
-          "limb_index"
+          "limb_index",
+          "hold_from",
+          "hold_to"
         ],
         "properties": {
           "start_frame": {
@@ -70,9 +72,21 @@
           },
           "limb_index": {
             "type": "integer"
+          },
+          "hold_from": {
+            "type": "integer"
+          },
+          "hold_to": {
+            "type": "integer"
           }
         },
         "additionalProperties": false
+      }
+    },
+    "FrameMoveMap": {
+      "type": "array",
+      "items": {
+        "type": "integer"
       }
     }
 

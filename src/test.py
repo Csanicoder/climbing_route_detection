@@ -1,4 +1,9 @@
+import os.path
+from pathlib import Path
 
+path : Path = "../data/"
 
-for items in range(1, 3):
-    print(items)
+file = "black_v4"
+ext = "_hold.json"
+
+print(os.path.join(path, file + ext))

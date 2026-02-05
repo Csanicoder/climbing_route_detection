@@ -1,6 +1,6 @@
 import cv2
 
-video_path = "annotated_video_output.mp4"
+video_path = "../video/spray.mp4"
 cap = cv2.VideoCapture(video_path)
 
 
@@ -14,7 +14,7 @@ frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
 # opening the writing to the output
 fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-out = cv2.VideoWriter("annotated_video_output2.mp4", fourcc, fps, (width, height))
+out = cv2.VideoWriter("../video/spray_fixed.mp4", fourcc, fps, (width, height))
 
 for i in range(frame_count):
 

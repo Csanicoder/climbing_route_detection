@@ -1,10 +1,54 @@
 import json
+import os.path
+
 import cv2
 import numpy as np
 
 from src.hold import inference
 
-video_path = "../video/black_v4_fixed.mp4"
+import argparse
+from pathlib import Path
+
+print("Started running hold recognition!")
+
+parser = argparse.ArgumentParser(
+    description="Process Hold Data"
+)
+
+parser.add_argument(
+    "--route_name",
+    type=str,
+    help="Common name of route"
+)
+
+parser.add_argument(
+    "--video_dir",
+    type=Path,
+    help="Path to directory video is in"
+)
+
+parser.add_argument(
+    "--data_dir",
+    type=Path,
+    help="Path to directory output will go to"
+)
+
+parser.add_argument(
+    "--video_file",
+    type=str,
+    help="Ending of video file from the route name"
+)
+
+parser.add_argument(
+    "--output",
+    "-o",
+    type=str,
+    help="Extension of output"
+)
+
+args = parser.parse_args()
+
+video_path = os.path.join(args.video_dir, args.route_name + args.video_file)
 cap = cv2.VideoCapture(video_path)
 
 if not cap.isOpened():
@@ -14,7 +58,7 @@ ret, frame = cap.read()
 if not ret:
     print("No frames!")
 
-frame = cv2.rotate(frame, cv2.ROTATE_180)
+#frame = cv2.rotate(frame, cv2.ROTATE_180)
 
 hold_instances = inference.inference(frame)["instances"]
 
@@ -37,11 +81,16 @@ for mask in masks:
     centroid = (centroid_x, centroid_y)
     centroids.append(centroid)
 
-data = [{"centroids": centroids, "boxes": boxes, "classes": classes}]
+#data = [{"centroids": centroids, "boxes": boxes, "classes": classes}]
 
-data = [{"centroid": centroid, "bbox": [int(round(x)) for x in box], "class": int(c)} for centroid, box, c in zip(centroids, boxes, classes)]
+cut_masks = []
 
-print(data)
+for box, mask in zip(boxes, masks):
+    bx = [round(x) for x in box]
+    cut_masks.append(mask[bx[1]:bx[3] + 1, bx[0]:bx[2] + 1].tolist()) # slice the pixel mask to the region of the bbox
+
+
+data = [{"centroid": centroid, "bbox": [int(round(x)) for x in box], "class": int(c), "cut_mask": cut_mask} for centroid, box, c, cut_mask in zip(centroids, boxes, classes, cut_masks)]
 
 '''
 for i in range(frame_count):
@@ -77,5 +126,7 @@ for i in range(frame_count):
 cap.release()
 
 # Save to JSON
-with open("../data/black_v4_holds.json", "w") as f:
+with open(os.path.join(args.data_dir, args.route_name + args.output), "w") as f:
     json.dump(data, f, indent=2)
+
+print("Hold data was saved successfully!")
