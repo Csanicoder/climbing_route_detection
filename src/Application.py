@@ -868,6 +868,9 @@ with (dpg.window(tag="Primary Window")):
 
                 dpg.bind_colormap("Wall Contacts Plot", "object_contacts")
 
+        with dpg.group(tag="CoMPlots", horizontal=True):
+            pass
+
             #with dpg.plot(tag="")
 
 
