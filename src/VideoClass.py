@@ -68,5 +68,9 @@ class Video:
 
     def get_frame(self, frame_idx):
         """Get the frame at index `frame_idx`"""
-        self._cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx - 1)
+        if frame_idx == 0:
+            self._cap.set(cv2.CAP_PROP_POS_FRAMES, self.FRAME_COUNT - 2)
+
+        else:
+            self._cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx - 1)
         return self.next()

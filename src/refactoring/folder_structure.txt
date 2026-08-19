@@ -1,0 +1,41 @@
+climbing_analyzer/
+│
+├── data/                        # Everything about data shapes and loading
+│   ├── __init__.py
+│   ├── schemas.py               # Pydantic models for your JSON schemas
+│   ├── loaders.py               # Load + validate JSON → typed Python objects
+│   └── session.py               # ClimbSession: the central data object
+│
+├── processing/                  # Pure computation, no GUI, no I/O
+│   ├── __init__.py
+│   ├── metrics.py               # Angle, velocity, distance calculations
+│   ├── segmentation.py          # Move segmentation logic
+│   ├── contact.py               # Hold contact detection / limb-hold mapping
+│   └── pipeline.py              # Orchestrates processing steps in order
+│
+├── detection/                   # Your existing detector scripts (mostly unchanged)
+│   ├── pose_detector.py
+│   └── hold_detector.py
+│
+├── gui/                         # All DearPyGui code
+│   ├── __init__.py
+│   ├── app.py                   # App entry point: init dpg, wire everything up
+│   ├── state.py                 # UIState: what frame, what toggles, selections
+│   ├── views/
+│   │   ├── __init__.py
+│   │   ├── frame_view.py        # Per-frame analysis window
+│   │   └── summary_view.py      # Summary window (heatmap, CoM path)
+│   ├── overlays/
+│   │   ├── __init__.py
+│   │   ├── pose_overlay.py      # Skeleton drawing
+│   │   ├── hold_overlay.py      # Hold bounding box drawing
+│   │   └── metrics_overlay.py   # On-video metric display
+│   └── widgets/
+│       ├── __init__.py
+│       ├── video_player.py      # Video playback controls
+│       └── metric_panel.py      # The color-coded slider panel
+│
+├── video/
+│   └── video_handler.py         # Your existing VideoHandler class (cleaned up)
+│
+└── main.py                      # Entry point

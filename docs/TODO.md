@@ -1,3 +1,0 @@
-- how much time spent using x hold
-- warnings list (small angle, high velocity, center of mass disbalance, etc.)
-- analytics summary panel (min, max, mean, median, standard deviation) + graph

@@ -1,7 +1,9 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Summary Data Definition",
   "type": "object",
-  "required": ["HoldUsageSummary", "HoldUsageMap", "RouteSegmentation", "FrameMoveMap", "RouteHandPath", "RouteFootPath"],
+  "additionalProperties": false,
+  "required": ["HoldUsageSummary", "HoldUsageMap", "RouteSegmentation", "FrameMoveMap", "RoutePath"],
   "properties": {
 
     "HoldUsageSummary": {
@@ -101,6 +103,5 @@
         "type": "integer"
       }
     }
-  },
-  "additionalProperties": false
+  }
 }

@@ -1,0 +1,13 @@
+- standardize / structure workflow
+- comparison
+- data collection
+- RAG
+- DTW
+- sam3
+
+
+
+- CoM acceleration visualization
+- foot detection // needs other enviroment
+- Route Node visualization // on video // contact detection problems // needs sam3
+- hold area // janky // train more // needs sam3

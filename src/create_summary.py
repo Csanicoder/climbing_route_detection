@@ -189,6 +189,24 @@ frame_move_map += [-1 * (len(route_seg) + 1)] * last_rest_length
 
 route_seg_final = []
 
+
+
+def compute_route_path():
+    route_hand_path = []
+    route_foot_path = []
+
+    for left_hand, right_hand, left_foot, right_foot in zip(analytics_data[53]["data"], analytics_data[54]["data"], analytics_data[55]["data"], analytics_data[56]["data"]):
+        if left_hand not in route_hand_path and left_hand > 0:
+            route_hand_path.append(left_hand)
+        if right_hand not in route_hand_path and right_hand > 0:
+            route_hand_path.append(right_hand)
+        if left_foot not in route_foot_path and left_foot > 0:
+            route_foot_path.append(left_foot)
+        if right_foot not in route_foot_path and right_foot > 0:
+            route_foot_path.append(right_foot)
+
+    return route_hand_path, route_foot_path
+
 for move in route_seg:
     route_seg_final.append(
         RouteSegmentationItem(
@@ -200,13 +218,15 @@ for move in route_seg:
         )
     )
 
-
+route_hand_path, route_foot_path = compute_route_path()
 
 summary_data = SummaryData(
     HoldUsageSummary=hold_usage_summary,
     HoldUsageMap=hold_usage_map,
     RouteSegmentation=route_seg_final,
-    FrameMoveMap=frame_move_map
+    FrameMoveMap=frame_move_map,
+    RouteHandPath=route_hand_path,
+    RouteFootPath=route_foot_path
 )
 
 

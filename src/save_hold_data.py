@@ -90,7 +90,8 @@ for box, mask in zip(boxes, masks):
     cut_masks.append(mask[bx[1]:bx[3] + 1, bx[0]:bx[2] + 1].tolist()) # slice the pixel mask to the region of the bbox
 
 
-data = [{"centroid": centroid, "bbox": [int(round(x)) for x in box], "class": int(c), "cut_mask": cut_mask} for centroid, box, c, cut_mask in zip(centroids, boxes, classes, cut_masks)]
+#data = [{"centroid": centroid, "bbox": [int(round(x)) for x in box], "class": int(c), "cut_mask": cut_mask} for centroid, box, c, cut_mask in zip(centroids, boxes, classes, cut_masks)]
+data = [{"centroid": centroid, "bbox": [int(round(x)) for x in box], "class": int(c)} for centroid, box, c in zip(centroids, boxes, classes)]
 
 '''
 for i in range(frame_count):
@@ -126,7 +127,7 @@ for i in range(frame_count):
 cap.release()
 
 # Save to JSON
-with open(os.path.join(args.data_dir, args.route_name + args.output), "w") as f:
+with open(os.path.join(args.data_dir, args.route_name + "_no_mask" + args.output), "w") as f:
     json.dump(data, f, indent=2)
 
 print("Hold data was saved successfully!")

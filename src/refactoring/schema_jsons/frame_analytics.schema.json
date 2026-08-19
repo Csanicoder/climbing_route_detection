@@ -1,0 +1,201 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Motion Analysis Output",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "BodyDistances", "BodyLayout", "CoM", "JointAngles",
+    "JointAngleVelocities", "KeypointVelocities", "WallContacts"
+  ],
+  "properties": {
+    "BodyLayout": {"$ref": "#/$defs/BodyLayoutType"},
+    "BodyDistances": {"$ref": "#/$defs/BodyDistancesType"},
+    "CoM": {"$ref": "#/$defs/CoMType"},
+    "JointAngles": {"$ref": "#/$defs/JointAnglesType"},
+    "JointAngleVelocities": {"$ref": "#/$defs/JointAnglesType"},
+    "KeypointVelocities": {"$ref": "#/$defs/KeypointVelocitiesType"},
+    "WallContacts": {"$ref": "#/$defs/WallContactsType"}
+  },
+
+
+
+  "$defs": {
+    "point": {
+      "type": "object",
+      "required": ["x", "y"],
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" }
+      },
+      "additionalProperties": false
+    },
+    "vector": {
+      "type": "object",
+      "required": ["x", "y", "magnitude"],
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "magnitude": { "type": "number" }
+      },
+      "additionalProperties": false
+    },
+    "doublePoint": {
+      "description": "Used for bounding boxes and lines (x1, y1) to (x2, y2)",
+      "type": "object",
+      "required": ["x1", "y1", "x2", "y2"],
+      "properties": {
+        "x1": { "type": "number" }, "y1": { "type": "number" },
+        "x2": { "type": "number" }, "y2": { "type": "number" }
+      },
+      "additionalProperties": false
+    },
+    "lineSegment": {
+      "type": "object",
+        "required": ["coords", "magnitude"],
+        "properties": {
+          "coords": { "$ref": "#/$defs/doublePoint" },
+          "magnitude": { "type": "number" }
+        },
+        "additionalProperties": false
+    },
+    "numArray": {
+      "type": "array",
+      "items": { "type": ["number", "null"] }
+    },
+    "strictIntArray": {
+      "type": "array",
+      "items": { "type": "integer" }
+    },
+    "posArray": {
+      "type": "array",
+      "items": { "oneOf": [{ "$ref": "#/$defs/point" }, { "type": "null" }] }
+    },
+    "vecArray": {
+      "type": "array",
+      "items": { "oneOf": [{ "$ref": "#/$defs/vector" }, { "type": "null" }] }
+    },
+    "boxArray": {
+      "type": "array",
+      "items": { "oneOf": [{ "$ref": "#/$defs/doublePoint" }, { "type": "null" }] }
+    },
+    "lineArray": { "$ref": "#/$defs/boxArray" },
+    "lineSegmentArray": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {"$ref": "#/$defs/lineSegment"},
+          { "type": "null" }
+        ]
+      }
+    },
+    "BodyLayoutType": {
+      "type": "object",
+      "required": [
+        "BodyBbox", "BodyCenter", "HorizontalBodyCenterline", "LowerBodyBbox",
+        "LowerBodyCenter", "LowerHorizontalBodyCenterline", "LowerVerticalBodyCenterline",
+        "UpperBodyBbox", "UpperBodyCenter", "UpperHorizontalBodyCenterline", "UpperVerticalBodyCenterline",
+        "VerticalBodyCenterline"
+      ],
+      "properties": {
+        "BodyBbox": {"$ref": "#/$defs/boxArray"},
+        "BodyCenter": { "$ref": "#/$defs/posArray" },
+        "HorizontalBodyCenterline": { "$ref": "#/$defs/lineArray" },
+        "VerticalBodyCenterline": { "$ref": "#/$defs/lineArray" },
+        "UpperBodyBbox": { "$ref": "#/$defs/boxArray" },
+        "UpperBodyCenter": { "$ref": "#/$defs/posArray" },
+        "UpperHorizontalBodyCenterline": { "$ref": "#/$defs/lineArray" },
+        "UpperVerticalBodyCenterline": { "$ref": "#/$defs/lineArray" },
+        "LowerBodyBbox": { "$ref": "#/$defs/boxArray" },
+        "LowerBodyCenter": { "$ref": "#/$defs/posArray" },
+        "LowerHorizontalBodyCenterline": { "$ref": "#/$defs/lineArray" },
+        "LowerVerticalBodyCenterline": { "$ref": "#/$defs/lineArray" }
+      },
+      "additionalProperties": false
+    },
+
+    "BodyDistancesType": {
+      "type": "object",
+      "required": [
+        "FallDiagonal", "FeetDistance", "HandsDistance", "LeftArmReach", "LeftLegReach",
+        "LeftSideDistance", "RightArmReach", "RightLegReach", "RightSideDistance", "RiseDiagonal"
+      ],
+      "properties": {
+        "LeftArmReach": { "$ref": "#/$defs/vecArray" },
+        "RightArmReach": { "$ref": "#/$defs/vecArray" },
+        "LeftLegReach": { "$ref": "#/$defs/vecArray" },
+        "RightLegReach": { "$ref": "#/$defs/vecArray" },
+        "HandsDistance": { "$ref": "#/$defs/lineSegmentArray" },
+        "FeetDistance": { "$ref": "#/$defs/lineSegmentArray" },
+        "LeftSideDistance": { "$ref": "#/$defs/lineSegmentArray" },
+        "RightSideDistance": { "$ref": "#/$defs/lineSegmentArray" },
+        "FallDiagonal": { "$ref": "#/$defs/lineSegmentArray" },
+        "RiseDiagonal": { "$ref": "#/$defs/lineSegmentArray" }
+      },
+      "additionalProperties": false
+    },
+    "CoMType": {
+      "title": "Center of Mass",
+      "type": "object",
+      "required": ["DistanceToBC", "Position", "Velocity", "Acceleration", "Jerk"],
+      "properties": {
+        "Position": { "$ref": "#/$defs/posArray" },
+        "Velocity": { "$ref": "#/$defs/vecArray" },
+        "Acceleration" : {"$ref": "#/$defs/vecArray"},
+        "Jerk" : {"$ref": "#/$defs/vecArray"},
+        "DistanceToBC": { "$ref": "#/$defs/vecArray" }
+      },
+      "additionalProperties": false
+    },
+    "JointAnglesType": {
+      "type": "object",
+      "required": [
+        "LeftArmpit", "RightArmpit", "LeftElbow", "RightElbow",
+        "LeftHip", "RightHip", "LeftKnee", "RightKnee"
+      ],
+      "properties": {
+        "LeftArmpit": { "$ref": "#/$defs/numArray" },
+        "RightArmpit": { "$ref": "#/$defs/numArray" },
+        "LeftElbow": { "$ref": "#/$defs/numArray" },
+        "RightElbow": { "$ref": "#/$defs/numArray" },
+        "LeftHip": { "$ref": "#/$defs/numArray" },
+        "RightHip": { "$ref": "#/$defs/numArray" },
+        "LeftKnee": { "$ref": "#/$defs/numArray" },
+        "RightKnee": { "$ref": "#/$defs/numArray" }
+      },
+      "additionalProperties": false
+    },
+    "KeypointVelocitiesType": {
+      "type": "object",
+      "required": [
+        "LeftShoulder", "RightShoulder", "LeftElbow", "RightElbow", "LeftWrist", "RightWrist",
+        "LeftHip", "RightHip", "LeftKnee", "RightKnee", "LeftAnkle", "RightAnkle"
+      ],
+      "properties": {
+        "LeftShoulder": { "$ref": "#/$defs/vecArray" },
+        "RightShoulder": { "$ref": "#/$defs/vecArray" },
+        "LeftElbow": { "$ref": "#/$defs/vecArray" },
+        "RightElbow": { "$ref": "#/$defs/vecArray" },
+        "LeftWrist": { "$ref": "#/$defs/vecArray" },
+        "RightWrist": { "$ref": "#/$defs/vecArray" },
+        "LeftHip": { "$ref": "#/$defs/vecArray" },
+        "RightHip": { "$ref": "#/$defs/vecArray" },
+        "LeftKnee": { "$ref": "#/$defs/vecArray" },
+        "RightKnee": { "$ref": "#/$defs/vecArray" },
+        "LeftAnkle": { "$ref": "#/$defs/vecArray" },
+        "RightAnkle": { "$ref": "#/$defs/vecArray" }
+      },
+      "additionalProperties": false
+    },
+    "WallContactsType": {
+      "type": "object",
+      "required": ["LeftFoot", "LeftHand", "RightFoot", "RightHand"],
+      "properties": {
+        "LeftHand": { "$ref": "#/$defs/strictIntArray" },
+        "RightHand": { "$ref": "#/$defs/strictIntArray" },
+        "LeftFoot": { "$ref": "#/$defs/strictIntArray" },
+        "RightFoot": { "$ref": "#/$defs/strictIntArray" }
+      },
+      "additionalProperties": false
+    }
+  }
+}
