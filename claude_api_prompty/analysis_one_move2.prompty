@@ -1,0 +1,93 @@
+---
+name: Climbing Pose Analysis
+description: >
+  Analyzes pose-estimation data from a climbing move (joint angles,
+  velocities, center-of-mass position, contact states) using code execution
+  against the uploaded CSV.
+authors:
+  - csand
+model:
+  api: chat
+  configuration:
+    type: anthropic
+    name: claude-sonnet-5
+inputs:
+  focus_areas:
+    type: string
+    description: Comma-separated list of things to focus the analysis on.
+sample:
+  focus_areas: >
+    three areas of analysis:
+    1. The dynamic/explosive aspect of the move, which limb(s) are generating
+    momentum vs reaching, whether any joint-angle or center-of-mass changes happen
+    simultaneously, and the exact frame/timestamp of any hand or foot
+    contact-state change.
+    2. The power requirements and during the move, paying
+    attention to joint angle changes for muscle activation, and
+    flexed joints for prolonged holds potentially demanding power.
+    Conclude efficiency as well.
+    3. The body positioning and balancing aspects, including
+    points of low velocity of the center of mass, inferring a deadpoints.
+---
+system:
+You are a biomechanics analyst specializing in climbing movement.
+You have access to a code execution tool with Python (pandas, numpy,
+matplotlib pre-installed). You can use these tools to preform calculations
+on the data, if you need more information for your analysis. The syntax and structure
+of every file uploaded is validated, you don't need to double check it.
+
+user:
+These are uploaded CSV files containing pose-estimation data from a climbing move (joint angles
+in degrees, velocities in px/frame-unit, center-of-mass position in
+pixels). The files contain the following data columns:
+
+- time_seconds: Represents the precise timestamp in seconds for each recorded video frame of the climbing move.
+- com_pos_x: Indicates the horizontal pixel coordinate of the climber's center of mass within the frame.
+- com_pos_y: Indicates the vertical pixel coordinate of the climber's center of mass within the frame.
+- com_vel_x: Measures the horizontal velocity of the center of mass in pixels per frame unit.
+- com_vel_y: Measures the vertical velocity of the center of mass in pixels per frame unit.
+- left_armpit_angle: Specifies the joint angle in degrees formed at the left armpit.
+- right_armpit_angle: Specifies the joint angle in degrees formed at the right armpit.
+- left_elbow_angle: Specifies the joint angle in degrees formed at the left elbow.
+- right_elbow_angle: Specifies the joint angle in degrees formed at the right elbow.
+- left_hip_angle: Specifies the joint angle in degrees formed at the left hip.
+- right_hip_angle: Specifies the joint angle in degrees formed at the right hip.
+- left_knee_angle: Specifies the joint angle in degrees formed at the left knee.
+- right_knee_angle: Specifies the joint angle in degrees formed at the right knee.
+- left_shoulder_velocity_x: Tracks the horizontal velocity of the left shoulder joint in pixels per frame unit.
+- left_shoulder_velocity_y: Tracks the vertical velocity of the left shoulder joint in pixels per frame unit.
+- right_shoulder_velocity_x: Tracks the horizontal velocity of the right shoulder joint in pixels per frame unit.
+- right_shoulder_velocity_y: Tracks the vertical velocity of the right shoulder joint in pixels per frame unit.
+- left_elbow_velocity_x: Tracks the horizontal velocity of the left elbow joint in pixels per frame unit.
+- left_elbow_velocity_y: Tracks the vertical velocity of the left elbow joint in pixels per frame unit.
+- right_elbow_velocity_x: Tracks the horizontal velocity of the right elbow joint in pixels per frame unit.
+- right_elbow_velocity_y: Tracks the vertical velocity of the right elbow joint in pixels per frame unit.
+- left_wrist_velocity_x: Tracks the horizontal velocity of the left wrist in pixels per frame unit.
+- left_wrist_velocity_y: Tracks the vertical velocity of the left wrist in pixels per frame unit.
+- right_wrist_velocity_x: Tracks the horizontal velocity of the right wrist in pixels per frame unit.
+- right_wrist_velocity_y: Tracks the vertical velocity of the right wrist in pixels per frame unit.
+- left_hip_velocity_x: Tracks the horizontal velocity of the left hip joint in pixels per frame unit.
+- left_hip_velocity_y: Tracks the vertical velocity of the left hip joint in pixels per frame unit.
+- right_hip_velocity_x: Tracks the horizontal velocity of the right hip joint in pixels per frame unit.
+- right_hip_velocity_y: Tracks the vertical velocity of the right hip joint in pixels per frame unit.
+- left_knee_velocity_x: Tracks the horizontal velocity of the left knee joint in pixels per frame unit.
+- left_knee_velocity_y: Tracks the vertical velocity of the left knee joint in pixels per frame unit.
+- right_knee_velocity_x: Tracks the horizontal velocity of the right knee joint in pixels per frame unit.
+- right_knee_velocity_y: Tracks the vertical velocity of the right knee joint in pixels per frame unit.
+- left_ankle_velocity_x: Tracks the horizontal velocity of the left ankle in pixels per frame unit.
+- left_ankle_velocity_y: Tracks the vertical velocity of the left ankle in pixels per frame unit.
+- right_ankle_velocity_x: Tracks the horizontal velocity of the right ankle in pixels per frame unit.
+- right_ankle_velocity_y: Tracks the vertical velocity of the right ankle in pixels per frame unit.
+- left_hand_contact: Indicates whether the left hand is touching a hold or disconnected (-1).
+- right_hand_contact: Indicates whether the right hand is touching a hold or disconnected (-1).
+- left_foot_contact: Indicates whether the left foot is touching a hold or disconnected (-1).
+- right_foot_contact: Indicates whether the right foot is touching a hold or disconnected (-1).
+
+Using the numeric data, analyze the move with a
+focus on: {{focus_areas}}
+
+Present your findings in an analysis of these three cardinal aspects:
+1. dynamism/explosivity, along with accuracy
+2. power usage and efficiency
+3. body positioning and balance
+And give suggestions on correct execution and areas of improvement.

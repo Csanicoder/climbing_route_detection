@@ -1,0 +1,67 @@
+
+
+IMPORTS AND LOADING
+---------------------------------
+
+imports
+
+argument parser ? external
+
+data files & pydantic  |
+                       | -> RESOURCES
+load video             |
+
+
+
+ON_VIDEO VISUALIZATION DEFINITIONS -> import // VIDEO & CV2
+---------------------------------------------------
+
+
+visualization variables
+
+vis toggling methods
+
+basic vis methods
+
+on-screen visualization methods
+
+
+
+INITIALIZE SESSION // DPG
+----------------------------------
+
+session variables
+
+
+MISC, I DON'T KNOW WHERE TO PUT
+----------------------------------
+
+analytics panel display methods
+
+colormaps, themes, font
+
+heatmap shortcut method
+
+move navigation methods
+
+com path plot trimming
+
+
+
+UI DEFINITION // DPG
+----------------------------------
+create video texture
+
+main window dpg definition
+
+    realtime analytics
+
+    summary
+
+
+RUNNING THE APPLICATION
+---------------------------------
+
+update video method
+
+start dpg session and main loop

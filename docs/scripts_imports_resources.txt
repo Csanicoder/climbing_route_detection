@@ -1,0 +1,67 @@
+
+
+RESOURCES
+---------------------
+
+video
+-> VIDEO HANDLER CLASS
+
+pose, hold, frame analytics, summary data
+-> DATA MODELS // PYDANTIC // JSON SCHEMA
+
+
+
+IMPORT SCRIPTS & METHODS
+------------------------------
+
+visualization
+
+    needs VIDEO TEXTURE and DATA MODELS
+
+    methods for each element
+    -> CLASS ?
+    -> closely related to DATA MODELS
+    -> concrete data isn't passed
+
+plots, displays (sliders)
+
+    needs DPG and DATA MODELS
+    some plots need VIDEO (resolution)
+    -> PLOT CLASSES
+    -> SLIDER CLASS?
+
+
+UI ELEMENTS AND SHIT
+----------------------------------
+
+PARENT APPLICATION CONTAINER
+
+realtime analytics window
+
+    concrete instance of DATA MODELS and VIDEO
+
+    video texture -> need some kind of HANDLER
+
+    implements VISUALIZATION and SLIDERS
+
+
+        ^
+        |
+        |
+ There is walkthrough
+        |
+        |
+        v
+
+summary window
+
+    concrete instance of DATA MODELS (and VIDEO)
+
+    implements PLOT CLASSES
+
+
+SESSION
+--------------------
+
+start dpg viewport
+main loop
